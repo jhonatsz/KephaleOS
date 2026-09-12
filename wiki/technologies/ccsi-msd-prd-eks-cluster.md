@@ -75,3 +75,5 @@ CyberSoft / SBIQ AI production workloads and shared CI runner infrastructure.
 - [[HPA memory-requests pin at max]]
 - [[Incident: GitLab Runner CPU reservation]]
 - [[Outage channel announcement runbook]]
+- [[k8s-gitlab-runner]] — Helm/IRSA/DinD deployment of the `gitlab-runner` namespace workload on this cluster
+- [[Runbook: GitLab Runner token rotation]]
