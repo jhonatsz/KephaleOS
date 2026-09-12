@@ -2,7 +2,11 @@
 type: solution
 status: active
 created: 2026-09-12
-updated: 2026-09-12
+updated: 2026-09-13
+aliases:
+  - "Solution: VPN fails when another VPN/ZTNA agent installed"
+  - "VPN-over-VPN routing conflict"
+  - "Zscaler + FortiClient routing hijack"
 tags: [vpn, networking, macos, zscaler, forticlient, ztna, ipsec, routing]
 sources:
   - "[[raw/notes/2026-09-12-forticlient-ipsec-vs-zscaler]]"

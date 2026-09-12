@@ -2,7 +2,10 @@
 type: runbook
 status: active
 created: 2026-09-12
-updated: 2026-09-12
+updated: 2026-09-13
+aliases:
+  - "Outage channel announcement runbook"
+  - "! IMP - Outages format"
 tags: [incident-communication, outage, runbook, cybersoft]
 last-executed: 2026-09-12
 ---

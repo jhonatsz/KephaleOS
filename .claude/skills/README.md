@@ -1,23 +1,23 @@
 # Vault-scoped Kephaleos skills
 
 The **primary** Kephaleos interface is the set of global slash commands
-installed in `~/.claude/commands/`:
+installed in `~/.claude/commands/` (unchanged in Phase 1.1):
 
-- `/kephaleos-remember`
-- `/kephaleos-recall`
-- `/kephaleos-decision`
-- `/kephaleos-review`
-- `/kephaleos-lint`
-- `/kephaleos-capture`
-- `/kephaleos-ingest`
-- `/kephaleos-meeting`
+- `/kephaleos-remember` — improves existing canonical pages first
+- `/kephaleos-recall` — evidence-ranked; personal experience prioritized
+- `/kephaleos-decision` — ADR-style, alternatives + consequences required
+- `/kephaleos-capture` — lightweight unprocessed capture to inbox
+- `/kephaleos-ingest` — compile inbox items into canonical wiki
+- `/kephaleos-meeting` — file a meeting; extract durable takeaways
+- `/kephaleos-review` — weekly signal pass (patterns, not counts)
+- `/kephaleos-lint` — quality checks; no destructive auto-fixes
 
-These work from **any** directory — you do not need to `cd ~/kephaleos`.
+All work from **any** directory. You do not need to `cd ~/kephaleos`.
 
 This directory (`~/kephaleos/.claude/skills/`) is reserved for
 **vault-scoped** skills added in Phase II or later — specialized behaviors
 that only make sense when Claude is actively working inside the vault
-(e.g. bulk re-compilation, taxonomy migrations, custom link resolvers).
+(bulk re-compilation, taxonomy migrations, custom link resolvers, etc.).
 
-Phase I intentionally ships nothing here. The knowledge repository stays
-portable: nothing under Kephaleos requires Claude Code to be useful.
+Phase 1.1 intentionally ships nothing here. The knowledge repository
+stays portable: nothing under Kephaleos requires Claude Code to be useful.

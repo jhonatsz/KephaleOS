@@ -4,8 +4,9 @@ Append-only. One line per meaningful event. Newest at the bottom.
 
 Format: `YYYY-MM-DD <op>: <one-line description> [→ [[page]]]`
 
-Ops: `remember`, `recall`, `decision`, `ingest`, `synthesize`, `lint`,
-`review`, `archive`, `promote`.
+Ops (Phase 1.1): `remember` (only for canonical creation/merge/major update),
+`decision`, `ingest`, `synthesize`, `restructure`, `resolve-conflict`,
+`promote`, `archive`. Per charter §20 do NOT log every recall/search/read.
 
 ---
 
@@ -17,3 +18,4 @@ Ops: `remember`, `recall`, `decision`, `ingest`, `synthesize`, `lint`,
 2026-09-12 remember: ccsi-msd-prd EKS cluster topology, workloads, and systemic CPU over-reservation → [[wiki/technologies/ccsi-msd-prd-eks-cluster]]
 2026-09-12 remember: Memory-based HPA silently pins at max when requests.memory is set below steady-state usage — generalized learning → [[wiki/learnings/2026-09-12-hpa-memory-requests-pin-max]]
 2026-09-12 remember: Internal outage-channel announcement runbook (! IMP - Outages format + combined post with inline postmortem via <br>) → [[wiki/runbooks/outage-channel-announcement]]
+2026-09-13 restructure: Phase 1.1 knowledge-intelligence upgrade — charter rewritten (write policy, canonical identity + aliases, project context, provenance/claim-level uncertainty, temporal knowledge, recall ranking + response format, logging discipline, lint upgrade); remember/recall/review/lint/decision commands rewritten; knowledge-map.md and today.md added; index.md and home.md trimmed; aliases added to existing canonical pages. Nothing deleted.

@@ -2,7 +2,10 @@
 type: learning
 status: active
 created: 2026-09-12
-updated: 2026-09-12
+updated: 2026-09-13
+aliases:
+  - "Learning: Kephaleos must be accessible from any working directory"
+  - "Kephaleos global access"
 tags: [kephaleos, meta, workflow, claude-code]
 sources: []
 confidence: high

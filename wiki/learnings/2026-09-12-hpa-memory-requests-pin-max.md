@@ -2,7 +2,10 @@
 type: learning
 status: active
 created: 2026-09-12
-updated: 2026-09-12
+updated: 2026-09-13
+aliases:
+  - "HPA memory-requests pin at max"
+  - "Memory HPA silent CPU reservation exhaustion"
 tags: [kubernetes, hpa, autoscaling, resource-requests, capacity-planning]
 confidence: high
 ---

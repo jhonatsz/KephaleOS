@@ -2,9 +2,13 @@
 type: technology
 status: active
 created: 2026-09-12
-updated: 2026-09-12
+updated: 2026-09-13
+aliases:
+  - "ccsi-msd-prd EKS cluster"
+  - "ccsi-msd-prd"
 tags: [kubernetes, eks, aws, ccsi-msd-prd, shared-infra]
 maturity: production
+time-sensitive: true
 ---
 
 # ccsi-msd-prd EKS cluster

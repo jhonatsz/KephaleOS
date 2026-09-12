@@ -2,7 +2,10 @@
 type: incident
 status: mitigated
 created: 2026-09-12
-updated: 2026-09-12
+updated: 2026-09-13
+aliases:
+  - "Incident: GitLab Runner CPU reservation"
+  - "GitLab CI runner Pending pods 2026-09-12"
 tags: [kubernetes, eks, hpa, gitlab-ci, sbiqai, ccsi-msd-prd]
 severity: SEV3
 duration: unknown
