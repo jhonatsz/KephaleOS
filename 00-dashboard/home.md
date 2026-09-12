@@ -39,7 +39,7 @@ Navigation, not the brain. The brain lives in `wiki/`.
 - `Remember this in Kephaleos: …` or `/kephaleos-remember`
 - `Recall from Kephaleos: …` or `/kephaleos-recall`
 - `/kephaleos-decision` · `/kephaleos-capture` · `/kephaleos-meeting` ·
-  `/kephaleos-ingest` · `/kephaleos-review` · `/kephaleos-lint`
+  `/kephaleos-ingest` · `/kephaleos-today` · `/kephaleos-review` · `/kephaleos-lint`
 
 ## Health
 

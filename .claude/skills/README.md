@@ -9,6 +9,7 @@ installed in `~/.claude/commands/` (unchanged in Phase 1.1):
 - `/kephaleos-capture` — lightweight unprocessed capture to inbox
 - `/kephaleos-ingest` — compile inbox items into canonical wiki
 - `/kephaleos-meeting` — file a meeting; extract durable takeaways
+- `/kephaleos-today` — refresh `today.md` from current vault state
 - `/kephaleos-review` — weekly signal pass (patterns, not counts)
 - `/kephaleos-lint` — quality checks; no destructive auto-fixes
 
