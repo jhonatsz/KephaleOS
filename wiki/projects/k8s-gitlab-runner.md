@@ -159,6 +159,8 @@ docs/
   saturation
 - [[ccsi-msd-prd EKS cluster]] — deployment target for production runner
 - [[Runbook: GitLab Runner token rotation]]
+- [[aws-tf-network]] — sibling CyberSoft DevOps project; owns the VPC
+  and hybrid connectivity for the workloads this runner builds/deploys
 
 ## Sources
 
