@@ -13,3 +13,7 @@ Ops: `remember`, `recall`, `decision`, `ingest`, `synthesize`, `lint`,
 2026-09-12 remember: Kephaleos must be accessible from any working directory (E2E bootstrap test) → [[wiki/learnings/2026-09-12-kephaleos-global-access]]
 2026-09-12 recall: What did I learn about global Kephaleos access? → [[wiki/learnings/2026-09-12-kephaleos-global-access]]
 2026-09-12 remember: VPN client fails when another VPN/ZTNA agent (Zscaler ZPA) hijacks the route to the gateway → [[wiki/solutions/vpn-fails-when-another-vpn-agent-installed]]
+2026-09-12 remember: GitLab runner scheduling failure on ccsi-msd-prd — sbiqai HPAs pinned at max due to undersized requests.memory; wasted CPU reservation blocked runner → [[work/incidents/2026-09-12-gitlab-runner-cpu-reservation]]
+2026-09-12 remember: ccsi-msd-prd EKS cluster topology, workloads, and systemic CPU over-reservation → [[wiki/technologies/ccsi-msd-prd-eks-cluster]]
+2026-09-12 remember: Memory-based HPA silently pins at max when requests.memory is set below steady-state usage — generalized learning → [[wiki/learnings/2026-09-12-hpa-memory-requests-pin-max]]
+2026-09-12 remember: Internal outage-channel announcement runbook (! IMP - Outages format + combined post with inline postmortem via <br>) → [[wiki/runbooks/outage-channel-announcement]]
