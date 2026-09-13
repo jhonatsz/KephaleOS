@@ -91,6 +91,16 @@ directly. Stacks: `networks/vpc01/{vpc,subnets,security-groups,
 nat-gateways,eips,vpn-gateways,customer-gateways}`, then
 `services/<env>/elb/<lb>/` per load balancer.
 
+**Services tree layout.** `services/<env>/ecs/` splits into subdirs
+by resource type: `alb/`, `clusters/`, `services/` (per-app ECS
+service dirs), and a legacy `service/` (**singular**) tree that
+predates the plural convention. **New ECS services go in `services/`
+(plural).** The legacy `service/` singular dirs were being retired
+during 2026-09 — same env can have both trees during the transition,
+which is exactly how the within-env `aws_ecs_service.name` collisions
+(see DO-1922) arose. RDS/redis sit under
+`services/<env>/{rds,redis}/<db-or-cache>/`.
+
 **Apply order (from-scratch, rarely needed):** vpc → eips → cgws →
 vgws → nat-gateways → subnets → security-groups → per-LB services.
 
@@ -106,12 +116,41 @@ they live elsewhere.
 - **Tags on resources:** `Name = atn-<Kind>-<qualifier>`,
   `Environment`, `Service`, `Maintainer = Terraform` (last one added
   by every module automatically).
+- **ECS service `name` uniqueness.** `aws_ecs_service.name` must be
+  unique per env (per AWS account). A collision inside one env silently
+  breaks `terraform apply` on the second stack. Sanity check for a
+  given env with:
+  ```
+  grep -rn 'name.*=.*"[^"]*service"' services/<env>/ecs/
+  ```
+  Cross-env repetition (same name in `develop` / `uat` / `production`)
+  is intentional — different backend states, different AWS accounts.
+- **Safe cleanup workflow for legacy stacks.** Operator runs
+  `terraform destroy` per stack; only after state is torn down does
+  the `.tf` config get removed. One commit per env-scope so any
+  rollback is surgical. Deleting `.tf` before `destroy` orphans state
+  and leaves live infra unmanaged.
 
 ## Key decisions
 
 *(No ADR-style decisions captured yet in `wiki/decisions/`. The
 "single VPC with subnet-tier envs" choice deserves a retroactive ADR
 if this project ever gets touched heavily.)*
+
+## History (durable to remember)
+
+- **2026-09-13 · DO-1922 · Duplicate-service cleanup + truoffer
+  decommission.** Retired the legacy `services/<env>/ecs/service/`
+  (singular) tree in develop / uat / production by moving workloads
+  into the plural `services/` tree, resolving two within-env
+  `aws_ecs_service.name` collisions (prod `ec-rails-service` between
+  metabase-pro and encoding-tool → kept encoding-tool; uat
+  `airflow-webhub-service` between standalone airflow-webhub and
+  sbiqlite-airflow → kept sbiqlite-airflow), and fully decommissioned
+  the **truoffer** project in both prod and uat (ECS service, ECS
+  cluster, RDS, ALB, KMS). Metabase Pro in prod was also
+  decommissioned in the same pass. Branch:
+  `devops/DO-1922-cleanup-duplicate-services-and-truoffer`.
 
 ## Known issues (compiled 2026-09-13)
 
