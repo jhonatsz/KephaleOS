@@ -124,3 +124,4 @@ For Sev-1/2, post a link to a full postmortem doc instead of inlining.
 ## Related
 
 - [[Incident: GitLab Runner CPU reservation]] — first documented use of the combined-post format
+- [[wiki/runbooks/ops-communication-templates]] — portable trio (maintenance / change / outage / postmortem) for non-cybersoft contexts
