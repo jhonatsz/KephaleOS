@@ -2,18 +2,38 @@
 type: solution
 status: active
 created: 2026-09-12
-updated: 2026-09-13
+updated: 2026-09-16
 aliases:
   - "Solution: VPN fails when another VPN/ZTNA agent installed"
   - "VPN-over-VPN routing conflict"
   - "Zscaler + FortiClient routing hijack"
-tags: [vpn, networking, macos, zscaler, forticlient, ztna, ipsec, routing]
+  - "Zscaler ZPA route hijack"
+  - "ZPA hijacking arbitrary destination"
+tags: [vpn, networking, macos, zscaler, forticlient, ztna, ipsec, routing, sftp]
 sources:
   - "[[raw/notes/2026-09-12-forticlient-ipsec-vs-zscaler]]"
+  - "[[raw/notes/2026-09-15-zpa-hijack-partner-sftp]]"
 confidence: high
 ---
 
 # Solution: VPN client fails to connect while another VPN/ZTNA agent is installed
+
+## Quick fix (mid-incident)
+
+```bash
+route -n get <gateway-ip>                                    # hijack if interface=utun*, gateway=100.64.0.*
+sudo route -n delete <gateway-ip>
+sudo route -n add -host <gateway-ip> -gateway <lan-gateway>  # LAN gateway, e.g. 192.168.68.1
+route -n get <gateway-ip>                                    # verify: interface=en0
+# → then Connect in the VPN client
+```
+
+Temporary. Dies on reboot / Wi-Fi change / offending agent's next policy
+sync. Read §Fix for the durable path (admin-side bypass list).
+
+**Third-occurrence rule:** if this pattern hits a third destination on
+the same machine, stop filing per-host bypass tickets and ask IT for a
+ZPA policy scope review instead.
 
 ## Symptom
 
@@ -34,8 +54,30 @@ Exact strings seen in the wild:
 phase1 negotiation failed due to time up.
 ```
 
+Or, for TCP destinations that aren't a VPN gateway at all (arbitrary
+services reached via SSH/HTTPS/SFTP):
+
+```
+nc: connectx to <host> port <port> (tcp) failed: Connection refused
+ssh: connect to host <host> port <port>: Connection refused
+```
+
 Source packets appear to originate from a **CGNAT** address (100.64.0.0/10)
 rather than the physical interface's address.
+
+### Timeout vs. Connection refused — a scope fingerprint
+
+Two symptom shapes have been observed for the same underlying hijack:
+
+| Symptom | What it means |
+| --- | --- |
+| Silent **timeout** (UDP: IKE Phase-1; TCP: hang) | Destination is inside ZCC's tunnel scope; ZCC is trying to forward, other side never answers |
+| Fast **connection refused** (TCP RST) | Destination route is hijacked but ZCC has no policy rule allowing it; ZCC synthesizes RST |
+
+Both cases have the same root cause (`route -n get` shows `utun*` /
+CGNAT gateway) and the same fix. This distinction only helps predict
+whether an IT bypass ticket or an App Segment addition is the right
+policy ask — see below.
 
 ## Root cause
 
@@ -151,8 +193,20 @@ Then immediately initiate the VPN connection. Caveats:
 
 ## Related
 
-- [[raw/notes/2026-09-12-forticlient-ipsec-vs-zscaler]] — the incident this was compiled from
+- [[raw/notes/2026-09-12-forticlient-ipsec-vs-zscaler]] — first lived incident (FortiClient IPsec, timeout shape)
+- [[raw/notes/2026-09-15-zpa-hijack-partner-sftp]] — second lived incident (arbitrary TCP SFTP, refused shape)
+
+## Recurring-problem note
+
+As of 2026-09-15 this pattern has bitten twice within a week on the same
+machine, against two unrelated destinations (corp FortiGate; partner
+SFTP). Per-host bypass tickets are treating the symptom. The right
+conversation with IT is probably a **broader ZPA policy review** —
+either narrowing the ZCC hijack scope so it stops intercepting
+non-corp destinations, or building a maintained bypass list of the
+external endpoints this user actually needs.
 
 ## Sources
 
 - Live troubleshooting session, 2026-09-12 (see raw note)
+- Live troubleshooting session, 2026-09-15 (see raw note)

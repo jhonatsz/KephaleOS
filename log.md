@@ -31,3 +31,4 @@ Ops (Phase 1.1): `remember` (only for canonical creation/merge/major update),
 2026-09-14 remember: created wiki/technologies/aws-elbv2-alb-nlb.md (ALB/NLB operational patterns) + improved wiki/projects/aws-tf-network.md (tag ownership map, ghost stacks, TLS remediation history)
 2026-09-14 capture: windows 2016 blocks TLS 1.3 upgrade plan for some services → raw/inbox/2026-09-14-2013-windows-2016-tls.md
 2026-09-15 remember: incident work/incidents/2026-09-15-bullzip-sqs-consumer-stall.md + created wiki/technologies/dotnet-framework-tls.md + updated aws-elbv2-alb-nlb.md and aws-tf-network.md cross-refs
+2026-09-15 remember: second confirmed ZPA route hijack (partner SFTP endpoint, TCP RST symptom vs prior IKE timeout) — strengthens [[wiki/solutions/vpn-fails-when-another-vpn-agent-installed]] with new "timeout vs refused" fingerprint + recurring-problem escalation note → [[raw/notes/2026-09-15-zpa-hijack-partner-sftp]]
