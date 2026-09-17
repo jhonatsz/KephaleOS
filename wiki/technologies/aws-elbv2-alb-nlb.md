@@ -2,7 +2,7 @@
 type: technology
 status: active
 created: 2026-09-14
-updated: 2026-09-14
+updated: 2026-09-15
 aliases:
   - "AWS ALB"
   - "AWS NLB"
@@ -80,6 +80,18 @@ support. Minimum versions:
 integrations, Windows Server 2016 without patches, embedded devices,
 or CI pipelines pinned to old base images. Fallback: use the `Res-2021-06`
 policy instead — same scanner-clean result, keeps TLS 1.2 compat.
+
+> [!warning] Windows Server 2016 + .NET Framework legacy caller compat
+> Even a fully-patched Windows Server 2016 host with SCHANNEL supporting
+> TLS 1.2 will fail against an ECDHE-only ALB policy if the .NET Framework
+> process is running with default settings. Root cause is client-side:
+> `SchUseStrongCrypto` and `SystemDefaultTlsVersions` under
+> `HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319` and its 32-bit
+> `WOW6432Node` twin. **The 32-bit twin is the one people forget** —
+> 64-bit test tools pass while the actual production 32-bit service still
+> fails. See [[dotnet-framework-tls]] for the full checklist. Real hit:
+> [[work/incidents/2026-09-15-bullzip-sqs-consumer-stall]] surfaced this
+> during triage of a different incident.
 
 ### 3. ALB-behind-NLB — the destroy-order trap
 
@@ -184,6 +196,11 @@ Same rule applies to `idle_timeout` on the ALB itself (seen at 300,
 ## Related
 
 - [[aws-tf-network]] — primary consumer of this pattern in CyberSoft.
+- [[dotnet-framework-tls]] — client-side twin of this page; covers
+  `SchUseStrongCrypto` / `SystemDefaultTlsVersions` for legacy .NET
+  callers that need to reach modern ALB policies.
+- [[work/incidents/2026-09-15-bullzip-sqs-consumer-stall]] — recent
+  incident that surfaced the Windows Server 2016 client-side compat pattern.
 - PCI DSS 4.0 §4.2 — mandates TLS 1.2 minimum for cardholder data
   transmission over open networks. `ELBSecurityPolicy-2016-08` fails
   this control.

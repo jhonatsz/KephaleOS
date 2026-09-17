@@ -29,3 +29,5 @@ Ops (Phase 1.1): `remember` (only for canonical creation/merge/major update),
 2026-09-14 capture: alb-prod-unstractlte listener destroy blocked (in-use by NLB) → raw/inbox/2026-09-14-1548-alb-destroy-listener-inuse.md
 2026-09-14 capture: decommission alb-tblextraction (NLB-first destroy order) → raw/inbox/2026-09-14-1550-decom-alb-tblextraction.md
 2026-09-14 remember: created wiki/technologies/aws-elbv2-alb-nlb.md (ALB/NLB operational patterns) + improved wiki/projects/aws-tf-network.md (tag ownership map, ghost stacks, TLS remediation history)
+2026-09-14 capture: windows 2016 blocks TLS 1.3 upgrade plan for some services → raw/inbox/2026-09-14-2013-windows-2016-tls.md
+2026-09-15 remember: incident work/incidents/2026-09-15-bullzip-sqs-consumer-stall.md + created wiki/technologies/dotnet-framework-tls.md + updated aws-elbv2-alb-nlb.md and aws-tf-network.md cross-refs

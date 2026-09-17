@@ -2,7 +2,7 @@
 type: project
 status: active
 created: 2026-09-13
-updated: 2026-09-14
+updated: 2026-09-15
 aliases:
   - "AWS TF Network"
   - "aws-tf-network"
@@ -183,6 +183,20 @@ they live elsewhere.
 if this project ever gets touched heavily.)*
 
 ## History (durable to remember)
+
+- **2026-09-15 · bullzip SQS consumer stall (unrelated to TLS
+  remediation).** `auto_bullzip_queue_production` backed up to 22
+  messages, 0 in-flight — production team bypassed a task via bullzip and
+  the downstream SQS consumer couldn't resolve the task record for its
+  update step. Head-of-line blocked, no DLQ. **Notable side-discovery:**
+  the Windows Server 2016 host `AWS-DU` had `SchUseStrongCrypto` set on
+  the 64-bit registry hive but **not on `WOW6432Node`** — 32-bit .NET
+  Framework services on that host default to TLS 1.0/SSL 3.0. Was not
+  the cause of the SQS incident but is a latent risk against any future
+  ALB tightening. Full record:
+  [[work/incidents/2026-09-15-bullzip-sqs-consumer-stall]]. Follow-ups
+  queued: DLQ for the queue, CloudWatch alarm on depth, consumer
+  fix for not-found tasks, and audit of Windows-host TLS registry drift.
 
 - **2026-09-13 → 2026-09-14 · SSL/TLS weak-protocol remediation.**
   Branch `devops/alb-weak-tls-remediation` (26 commits). Fleet-wide
