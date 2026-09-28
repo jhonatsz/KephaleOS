@@ -2,17 +2,18 @@
 type: solution
 status: active
 created: 2026-09-12
-updated: 2026-09-16
+updated: 2026-09-22
 aliases:
   - "Solution: VPN fails when another VPN/ZTNA agent installed"
   - "VPN-over-VPN routing conflict"
   - "Zscaler + FortiClient routing hijack"
   - "Zscaler ZPA route hijack"
   - "ZPA hijacking arbitrary destination"
-tags: [vpn, networking, macos, zscaler, forticlient, ztna, ipsec, routing, sftp]
+tags: [vpn, networking, macos, zscaler, forticlient, ztna, ipsec, routing, sftp, ssh, aws]
 sources:
   - "[[raw/notes/2026-09-12-forticlient-ipsec-vs-zscaler]]"
   - "[[raw/notes/2026-09-15-zpa-hijack-partner-sftp]]"
+  - "[[raw/notes/2026-09-22-zpa-hijack-ec2-runner-ssh]]"
 confidence: high
 ---
 
@@ -195,18 +196,38 @@ Then immediately initiate the VPN connection. Caveats:
 
 - [[raw/notes/2026-09-12-forticlient-ipsec-vs-zscaler]] — first lived incident (FortiClient IPsec, timeout shape)
 - [[raw/notes/2026-09-15-zpa-hijack-partner-sftp]] — second lived incident (arbitrary TCP SFTP, refused shape)
+- [[raw/notes/2026-09-22-zpa-hijack-ec2-runner-ssh]] — third lived incident (AWS EC2 CI runner, SSH 22, silent timeout shape)
 
 ## Recurring-problem note
 
-As of 2026-09-15 this pattern has bitten twice within a week on the same
-machine, against two unrelated destinations (corp FortiGate; partner
-SFTP). Per-host bypass tickets are treating the symptom. The right
-conversation with IT is probably a **broader ZPA policy review** —
-either narrowing the ZCC hijack scope so it stops intercepting
-non-corp destinations, or building a maintained bypass list of the
-external endpoints this user actually needs.
+As of 2026-09-22 this pattern has bitten **three times in ten days** on
+the same machine, against three unrelated destinations:
+
+| Date | Destination | Owner | Symptom |
+| --- | --- | --- | --- |
+| 2026-09-12 | Corp FortiGate (IPsec) | Employer | UDP IKE timeout |
+| 2026-09-15 | Partner SFTP (TCP 2233) | Third party | Fast TCP RST |
+| 2026-09-22 | Employer AWS EC2 CI runner (SSH 22) | Employer | Silent TCP + ICMP timeout |
+
+**Third-occurrence rule triggered.** Stop filing per-host bypass tickets.
+The right ask is a **ZPA policy scope review** with IT: ZCC's hijack
+scope (currently covering large public-internet ranges — one observed
+route was `32.0.0.0/3`) is far broader than the ZPA App Segments
+justify. Either narrow the scope, or maintain an explicit bypass list
+of the external endpoints this user actually reaches for legitimate
+work. Continuing per-host tickets is now a signal that the ZPA policy
+itself is misconfigured, not that individual destinations are
+exceptions.
+
+**When the target is employer-owned infrastructure** (as in the 3rd
+incident), be aware two failure modes can stack: the ZPA hijack AND
+a security-group rule that only allow-lists corp NAT. Resolve the
+hijack first, then confirm the SG accepts the resulting egress IP —
+or connect FortiClient IPsec so the egress goes through corp NAT
+directly, avoiding both problems in one step.
 
 ## Sources
 
 - Live troubleshooting session, 2026-09-12 (see raw note)
 - Live troubleshooting session, 2026-09-15 (see raw note)
+- Live troubleshooting session, 2026-09-22 (see raw note)
