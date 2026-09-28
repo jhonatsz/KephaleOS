@@ -2,7 +2,7 @@
 type: organization
 status: active
 created: 2026-09-15
-updated: 2026-09-17
+updated: 2026-09-24
 aliases:
   - CyberSoft
   - CyberSoft BPO
@@ -129,6 +129,9 @@ by internal authoritative versions when captured):
   shared `devops/ansible` repo
 - **[[ccsi-msd-prd EKS cluster]]** — shared prod EKS cluster referenced
   from the ops incident history
+- **[[wiki/projects/colpaliservice]]** — FastAPI embeddings + PDF pipeline
+  in the `data-engineering` GitLab group, deployed to the `colpali`
+  namespace on the shared EKS cluster
 - **[[wiki/runbooks/outage-channel-announcement]]** — internal outage
   communication runbook
 

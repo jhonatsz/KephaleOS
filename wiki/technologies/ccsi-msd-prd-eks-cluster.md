@@ -2,7 +2,7 @@
 type: technology
 status: active
 created: 2026-09-12
-updated: 2026-09-13
+updated: 2026-09-24
 aliases:
   - "ccsi-msd-prd EKS cluster"
   - "ccsi-msd-prd"
@@ -41,7 +41,7 @@ Known namespaces on this cluster:
 - `tasktile` — tasktile deployment + HPA (min 3, max 10)
 - `cybersoft-dtr` — cybersoft-dtr deployment + HPA (min 2, max 10)
 - `adminsynonyms` — adminsynonyms webapp + HPA (min 1, max 10)
-- `colpali` — colpali deployment + HPA (min 1, max 10)
+- `colpali` — [[colpaliservice]] deployment + HPA (min 1, max 10)
 - `gitlab-runner` — GitLab CI runner + ephemeral job pods
 
 ## Where we use it
