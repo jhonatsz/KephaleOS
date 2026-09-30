@@ -2,7 +2,7 @@
 type: technology
 status: active
 created: 2026-09-14
-updated: 2026-09-15
+updated: 2026-10-01
 aliases:
   - "AWS ALB"
   - "AWS NLB"
@@ -12,10 +12,11 @@ aliases:
   - "ELBSecurityPolicy"
 tags: [aws, load-balancer, tls, networking, security, terraform]
 sources:
-  - "[[raw/inbox/2026-09-14-1518-alb-listener-drift]]"
-  - "[[raw/inbox/2026-09-14-1526-taskmanager-03-decom]]"
-  - "[[raw/inbox/2026-09-14-1548-alb-destroy-listener-inuse]]"
-  - "[[raw/inbox/2026-09-14-1550-decom-alb-tblextraction]]"
+  - "[[raw/notes/2026-09-14-1518-alb-listener-drift]]"
+  - "[[raw/notes/2026-09-14-1526-taskmanager-03-decom]]"
+  - "[[raw/notes/2026-09-14-1548-alb-destroy-listener-inuse]]"
+  - "[[raw/notes/2026-09-14-1550-decom-alb-tblextraction]]"
+  - "[[raw/notes/2026-09-14-2013-windows-2016-tls]]"
 maturity: production
 ---
 
@@ -210,8 +211,9 @@ Same rule applies to `idle_timeout` on the ALB itself (seen at 300,
 - 2026-09-13 → 2026-09-14 CyberSoft `devops/alb-weak-tls-remediation`
   branch — 26 commits, patched 19 live ALBs across dev/staging/uat/prod.
 - Inbox captures from the same session:
-  - [[raw/inbox/2026-09-14-1518-alb-listener-drift]]
-  - [[raw/inbox/2026-09-14-1526-taskmanager-03-decom]]
-  - [[raw/inbox/2026-09-14-1548-alb-destroy-listener-inuse]]
-  - [[raw/inbox/2026-09-14-1550-decom-alb-tblextraction]]
+  - [[raw/notes/2026-09-14-1518-alb-listener-drift]]
+  - [[raw/notes/2026-09-14-1526-taskmanager-03-decom]]
+  - [[raw/notes/2026-09-14-1548-alb-destroy-listener-inuse]]
+  - [[raw/notes/2026-09-14-1550-decom-alb-tblextraction]]
+  - [[raw/notes/2026-09-14-2013-windows-2016-tls]]
 - AWS docs: [ELB security policies](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html#describe-ssl-policies)

@@ -11,8 +11,8 @@ tags: [sqs, bullzip, safeboxiq, taskmanager, windows-server-2016, dotnet-framewo
 severity: SEV3
 duration: unknown
 sources:
-  - "[[raw/inbox/2026-09-14-1518-alb-listener-drift]]"
-  - "[[raw/inbox/2026-09-14-1548-alb-destroy-listener-inuse]]"
+  - "[[raw/notes/2026-09-14-1518-alb-listener-drift]]"
+  - "[[raw/notes/2026-09-14-1548-alb-destroy-listener-inuse]]"
 ---
 
 # Incident: auto_bullzip_queue_production SQS consumer stall — 2026-09-15
