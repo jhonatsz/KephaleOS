@@ -2,7 +2,7 @@
 type: technology
 status: active
 created: 2026-09-12
-updated: 2026-09-24
+updated: 2026-10-01
 aliases:
   - "ccsi-msd-prd EKS cluster"
   - "ccsi-msd-prd"
@@ -74,6 +74,9 @@ CyberSoft / SBIQ AI production workloads and shared CI runner infrastructure.
 
 - [[HPA memory-requests pin at max]]
 - [[Incident: GitLab Runner CPU reservation]]
+- [[Kubernetes Deployment Readiness Checklist]] — this cluster is one
+  of the two grounding cases for the pre-deploy synthesis (missing
+  autoscaler + missing pending-pod alerting)
 - [[Outage channel announcement runbook]]
 - [[k8s-gitlab-runner]] — Helm/IRSA/DinD deployment of the `gitlab-runner` namespace workload on this cluster
 - [[Runbook: GitLab Runner token rotation]]

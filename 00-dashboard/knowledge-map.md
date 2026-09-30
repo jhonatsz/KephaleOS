@@ -57,11 +57,15 @@ canonical pages (avoiding broken-link noise for lint):
   pricing services; time-sensitive topology snapshot
 - [[HPA memory-requests pin at max]] — memory-HPA pitfall; steady-state
   workloads pin at max when `requests.memory` sits near real usage
+- [[Requests-vs-usage divergence starves cluster capacity]] — the
+  opposite calibration failure (requests too high → HPA suppressed)
+- [[Cluster autoscaler empty NotTriggerScaleUp means missing ASG discovery tags]]
+  — CA can be healthy while managing zero node groups
 - [[Incident: GitLab Runner CPU reservation]] (`work/incidents/`) — first
   documented instance of HPA-driven CPU reservation exhaustion
-- **Latent synthesis:** if 2+ more incidents show CPU-request
-  over-provisioning or memory-HPA misconfiguration, promote to
-  `Kubernetes Deployment Readiness Checklist`.
+- **Synthesis:** [[Kubernetes Deployment Readiness Checklist]] — 6-item
+  pre-deploy checklist compiled from the 3 learnings + the incident +
+  the 2 cluster pages. Promoted from latent on 2026-10-01.
 
 ### AWS network infrastructure
 
@@ -106,18 +110,18 @@ canonical pages (avoiding broken-link noise for lint):
   synthesis: escalate from per-host bypass tickets to a ZPA policy
   scope review; watch for stacked failure modes (ZPA hijack + SG
   allow-list mismatch) on employer-owned targets.
-- *Latent:* Kubernetes deployment readiness checklist — 1 documented
-  incident so far; needs 2+ more.
+- **[[Kubernetes Deployment Readiness Checklist]]** (2026-10-01,
+  promoted from latent). 6-item pre-deploy checklist that closes the
+  compound failure mode of poorly-calibrated `requests` + broken
+  elasticity mechanisms + missing pending-pod alerting. Compiled from
+  3 learnings (HPA memory-requests, requests-vs-usage divergence, CA
+  ASG discovery tags), 1 incident (GitLab runner CPU reservation),
+  and 2 cluster pages (`ccsi-msd-prd`, `duplo-prd-usw2`).
 
 ---
 
 ## Current knowledge gaps
 
-- **Missing K8s learnings** with 3+ inbound references but no canonical
-  page: `Cluster autoscaler empty NotTriggerScaleUp means missing ASG
-  discovery tags` (cited from Techstyle, `duplo-prd-usw2`, NorthStar)
-  and `Requests-vs-usage divergence starves cluster capacity` (cited
-  from NorthStar).
 - **Proton VPN + FortiClient behavior.** Proton's WireGuard extension is
   present but inactive. If enabled, a similar routing conflict is
   possible. No capture yet.

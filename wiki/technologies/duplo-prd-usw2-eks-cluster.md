@@ -2,7 +2,7 @@
 type: technology
 status: active
 created: 2026-09-24
-updated: 2026-09-24
+updated: 2026-10-01
 aliases:
   - "duplo-prd-usw2 EKS cluster"
   - "duplo-prd-usw2"
@@ -82,6 +82,10 @@ and adjacent services. See [[northstar-duplo-router]].
 - [[Techstyle]]
 - [[northstar-duplo-router]]
 - [[Cluster autoscaler empty NotTriggerScaleUp means missing ASG discovery tags]]
+- [[Requests-vs-usage divergence starves cluster capacity]]
+- [[Kubernetes Deployment Readiness Checklist]] — this cluster is one
+  of the two grounding cases for the pre-deploy synthesis (broken CA
+  discovery + oversized Apollo Router requests)
 - [[HPA memory-requests pin at max]] — same *class* of pathology on a
   different cluster ([[ccsi-msd-prd EKS cluster]]): request-vs-usage
   divergence starves the scheduler's reservation budget while nodes idle.
