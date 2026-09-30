@@ -1,7 +1,6 @@
 ---
 type: dashboard
-updated: 2026-10-01
----
+updated: 2026-10-01---
 
 # Knowledge Map
 
@@ -129,10 +128,13 @@ canonical pages (avoiding broken-link noise for lint):
   GitLab-runner incident (raise `sbiqai` `requests.memory`, lower
   `requests.cpu`, extend review to `tasktile` / `cybersoft-dtr` /
   `adminsynonyms`, add `Pending`-pod alert) — outcomes not yet captured.
-- **ZPA policy scope review with IT.** The third-occurrence rule
-  triggered on 2026-09-22 recommends a broader ZPA policy conversation
-  (narrow ZCC hijack scope or maintain a bypass list). Outcome of that
-  conversation not yet captured.
+- **ZPA policy scope review with IT — decided against, for now.** The
+  third-occurrence rule triggered on 2026-09-22 recommended a broader
+  ZPA policy conversation. Captured on 2026-10-01: operator is opting
+  to keep using the local `route` fix each time (see [[Zscaler ZPA
+  route hijack]] §"In practice"). This isn't a real gap anymore — it's
+  a documented deferral. Reopens when the friction ranking flips
+  (destination not macOS-routable, or shared resource).
 - **Colpali git-history rewrite.** Local force-rewrite prepared but not
   pushed. Credentials already rotated (safety net closed), so this is
   hygiene rather than risk — but the loop stays open until the push

@@ -2,7 +2,7 @@
 type: solution
 status: active
 created: 2026-09-12
-updated: 2026-09-22
+updated: 2026-10-01
 aliases:
   - "Solution: VPN fails when another VPN/ZTNA agent installed"
   - "VPN-over-VPN routing conflict"
@@ -14,6 +14,7 @@ sources:
   - "[[raw/notes/2026-09-12-forticlient-ipsec-vs-zscaler]]"
   - "[[raw/notes/2026-09-15-zpa-hijack-partner-sftp]]"
   - "[[raw/notes/2026-09-22-zpa-hijack-ec2-runner-ssh]]"
+  - "[[raw/notes/2026-10-01-0456-zpa-route-command]]"
 confidence: high
 ---
 
@@ -226,8 +227,39 @@ hijack first, then confirm the SG accepts the resulting egress IP —
 or connect FortiClient IPsec so the egress goes through corp NAT
 directly, avoiding both problems in one step.
 
+### In practice (2026-10-01)
+
+The escalation ask above is what the third-occurrence rule *recommends*.
+What the operator *actually does* is different: keep using the local
+`route` command each time the hijack fires, and skip the IT
+conversation. Operator's own note (2026-10-01):
+
+> "for ZPA i just stick to route command to fix it"
+
+Two things this tells future-me:
+
+1. **The friction ranking is real.** A 30-second `route` command
+   beats scheduling a policy-scope review conversation with IT, even
+   at three incidents in ten days. Whenever this page's "third-
+   occurrence rule" fires again, expect the operator to reach for the
+   local fix first. The recommendation above is technically correct
+   and stays on the page — but it's rarely the path taken.
+2. **The incident count will keep growing.** Because the local fix
+   doesn't change the ZPA policy, the next unrelated destination that
+   trips the hijack will fire again and land here as incident #4, #5,
+   etc. If/when the count reaches a threshold where the friction
+   ranking flips (e.g. the workaround is no longer 30 seconds because
+   the target isn't macOS-routable, or the destination is a shared
+   resource where the operator can't unilaterally patch the local
+   route), *that* is when the escalation actually happens. Track this
+   in the table above.
+
+Source: [[raw/notes/2026-10-01-0456-zpa-route-command]].
+
 ## Sources
 
 - Live troubleshooting session, 2026-09-12 (see raw note)
 - Live troubleshooting session, 2026-09-15 (see raw note)
 - Live troubleshooting session, 2026-09-22 (see raw note)
+- Operator practice note, 2026-10-01 — chooses local `route` fix over IT
+  escalation (see raw note)
