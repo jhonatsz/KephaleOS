@@ -2,7 +2,7 @@
 type: technology
 status: active
 created: 2026-09-15
-updated: 2026-09-15
+updated: 2026-10-01
 aliases:
   - ".NET Framework TLS"
   - "SchUseStrongCrypto"
@@ -13,6 +13,7 @@ aliases:
 tags: [dotnet, windows, tls, security, legacy-runtime]
 sources:
   - "[[work/incidents/2026-09-15-bullzip-sqs-consumer-stall]]"
+  - "[[raw/notes/2026-09-14-2013-windows-2016-tls]]"
 maturity: production
 ---
 

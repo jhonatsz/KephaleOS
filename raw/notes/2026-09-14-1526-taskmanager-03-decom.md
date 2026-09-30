@@ -1,9 +1,13 @@
 ---
 type: source
-status: raw
+status: compiled
 source-kind: note
 created: 2026-09-14
 captured-at: 2026-09-14T15:26:07
+compiled-at: 2026-10-01
+compiled-into:
+  - "[[wiki/technologies/aws-elbv2-alb-nlb]]"
+  - "[[wiki/projects/aws-tf-network]]"
 ---
 
 # Question
