@@ -2,7 +2,7 @@
 type: project
 status: active
 created: 2026-09-24
-updated: 2026-09-24
+updated: 2026-09-30
 tags: [python, fastapi, llm, embeddings, kubernetes, aws, data-engineering, colpali]
 repo: "git@git.cybersoftbpo.com:data-engineering/colpaliservice.git"
 ---
@@ -111,12 +111,22 @@ or re-run `./deploy.sh <older-sha>`.
 - **Namespace already provisioned.** `colpali` namespace is enumerated on
   the [[ccsi-msd-prd EKS cluster]] page as an active workload.
 
-> [!warning] Historical secret leak
+> [!warning] Historical secret leak — remediation status (2026-09-30)
 > Prior to 2026-09-24, `k8s/kube.yaml` on `main` embedded hardcoded
 > `DATABASE_PASSWORD`, `S3_WEBHUB_ACCESS_KEY`, and `S3_WEBHUB_SECRET_KEY`
-> in the ConfigMap. They were removed in the deploy-scaffold work on
-> branch `chore/jhonatsz`, but remain reachable through git history.
-> **Rotate the AWS key and DB password regardless of the manifest fix.**
+> in the ConfigMap. Removed from the working tree in the deploy-scaffold
+> work on branch `chore/jhonatsz`.
+>
+> - **AWS key + DB password rotated** on 2026-09-30 — this is the
+>   binding safety net; the exposed values are dead.
+> - **Git history rewritten locally** on 2026-09-30 (not yet
+>   force-pushed to `origin`). Until the rewrite is published (and any
+>   mirrors/forks catch up), remote history still contains the values.
+>   Because rotation is done, this is now hygiene, not urgency.
+>
+> When force-pushing: coordinate with anyone tracking the repo — all
+> collaborators need to reset local clones, and any in-flight branches
+> off the old history will need to be rebased onto the rewritten tip.
 
 ## Related
 
