@@ -2,7 +2,7 @@
 type: project
 status: active
 created: 2026-09-18
-updated: 2026-09-18
+updated: 2026-10-01
 tags: [oikos, study, ccna, lab, packet-tracer, eve-ng]
 confidence: high
 ---
@@ -26,7 +26,7 @@ Treating them as their own numbered phase over-counted work and confused the seq
 | Component | Kicks off | Notes |
 |---|---|---|
 | [[packet-tracer\|Packet Tracer]] | Alongside Phase 0 | Free, runs on workstation, covers 90% of CCNA topology drills |
-| [[eve-ng\|EVE-NG / GNS3]] | Once Phase 6 provisions it on Proxmox | Real Cisco IOS images; needed for OSPF/BGP realism and advanced troubleshooting |
+| [[../roadmap/phase-06-eve-ng\|EVE-NG / GNS3]] | Once Phase 6 provisions it on Proxmox | Real Cisco IOS images; needed for OSPF/BGP realism and advanced troubleshooting |
 | CCNA reading | Continuous | Cisco NetAcad, Odom Official Cert Guide, Boson practice exams |
 | Lab notes | Every session | Every `.pkt` gets a `notes.md`. If it's not documented, it didn't happen |
 
