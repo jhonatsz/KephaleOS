@@ -5,6 +5,7 @@ created: 2026-09-23
 updated: 2026-10-01
 aliases:
   - "Cluster autoscaler empty NotTriggerScaleUp means missing ASG discovery tags"
+  - "CA silent-fail on missing ASG tags"
   - "CA empty NotTriggerScaleUp reason"
   - "cluster-autoscaler no node group config"
 tags: [kubernetes, eks, cluster-autoscaler, autoscaling, asg, aws]
@@ -100,3 +101,5 @@ side: `NotTriggerScaleUp` events with empty reason + CA logs saying
   reason node pressure existed in the first place; both learnings were
   discovered in the same investigation
 - [[northstar-duplo-router]] — the workload triggering scheduling failures
+- [[Kubernetes Deployment Readiness Checklist]] — synthesis (item 3)
+  covers verifying CA is actually operational; this learning grounds it

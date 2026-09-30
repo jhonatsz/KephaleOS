@@ -2,7 +2,7 @@
 type: learning
 status: active
 created: 2026-09-12
-updated: 2026-09-13
+updated: 2026-10-01
 aliases:
   - "HPA memory-requests pin at max"
   - "Memory HPA silent CPU reservation exhaustion"
@@ -72,3 +72,5 @@ and the deployment's `requests.memory`.
 
 - [[Incident: GitLab Runner CPU reservation]]
 - [[ccsi-msd-prd EKS cluster]]
+- [[Kubernetes Deployment Readiness Checklist]] — synthesis (item 2)
+  covers memory-based HPA on steady-state workloads

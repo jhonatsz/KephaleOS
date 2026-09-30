@@ -114,3 +114,5 @@ The divergence — not either number alone — is the signal.
   discovered in the same 2026-09-23 investigation
 - [[northstar-duplo-router]] — workload where this was first seen
 - [[duplo-prd-usw2 EKS cluster]] — cluster context
+- [[Kubernetes Deployment Readiness Checklist]] — synthesis (item 1)
+  covers request calibration; this learning grounds it

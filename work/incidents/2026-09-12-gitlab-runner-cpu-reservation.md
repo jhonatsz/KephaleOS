@@ -2,7 +2,7 @@
 type: incident
 status: mitigated
 created: 2026-09-12
-updated: 2026-09-13
+updated: 2026-10-01
 aliases:
   - "Incident: GitLab Runner CPU reservation"
   - "GitLab CI runner Pending pods 2026-09-12"
@@ -86,6 +86,8 @@ separator).
 
 - [[HPA memory-requests pin at max]]
 - [[ccsi-msd-prd EKS cluster]]
+- [[Kubernetes Deployment Readiness Checklist]] — this incident is the
+  grounding case for the synthesis's item 4 (pending-pod alerting)
 - [[Outage channel announcement runbook]]
 
 ## Evidence (diagnostic scan, 2026-09-12)
