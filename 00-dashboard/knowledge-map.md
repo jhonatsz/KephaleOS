@@ -1,6 +1,6 @@
 ---
 type: dashboard
-updated: 2026-09-13
+updated: 2026-10-01
 ---
 
 # Knowledge Map
@@ -22,55 +22,117 @@ canonical pages (avoiding broken-link noise for lint):
 
 ## Active knowledge clusters
 
+### CyberSoft (employer)
+
+- [[CyberSoft]] — org page, 6-service catalog, offices, delivery platforms
+- Projects: [[Yakap]] · [[CyberSoft SFTP]] · [[cybersoftbpo.com rebuild]] ·
+  [[colpaliservice]] · [[aws-tf-network]] · [[k8s-gitlab-runner]]
+- Shared prod: [[ccsi-msd-prd EKS cluster]]
+- Runbooks: [[Outage channel announcement runbook]] ·
+  [[Rotate GitLab Runner token]]
+- **Open loop:** colpali secret-leak — credentials rotated 2026-09-30;
+  local git-history rewrite prepared but not yet force-pushed
+
+### Techstyle (employer)
+
+- [[Techstyle]] — org page (Fabletics, Savage X); GitHub org `TechstyleOS`
+- [[NorthStar]] — Apollo Router v2 IaC for the federated storefront
+  gateway across us-west-2 / us-east-1 / eu-west-3
+- [[duplo-prd-usw2 EKS cluster]] — US-West production topology snapshot
+
+### Oikos (personal homelab)
+
+- [[wiki/projects/oikos|Oikos]] — canonical project page
+- ADR: [[wiki/decisions/oikos-0001-dns-namespace|oikos-0001 — internal DNS namespace `oikos.home.arpa`]]
+- Full operational tree at [[work/projects/oikos/README|work/projects/oikos/]] —
+  address plan (172.27.0.0/16, 9 VLANs), naming conventions, T14
+  bootstrap node, 11 numbered phase pages (0–11), hardware roadmap,
+  parallel study track (Packet Tracer + EVE-NG/GNS3)
+
 ### Kubernetes / EKS operations
 
-- [[ccsi-msd-prd EKS cluster]] — shared prod cluster; systematic CPU
+- [[ccsi-msd-prd EKS cluster]] — shared prod (CyberSoft); systematic CPU
   over-reservation; no autoscaler; no `Pending`-pod alerting
+- [[duplo-prd-usw2 EKS cluster]] — Techstyle prod; Apollo Router tenant +
+  pricing services; time-sensitive topology snapshot
 - [[HPA memory-requests pin at max]] — memory-HPA pitfall; steady-state
   workloads pin at max when `requests.memory` sits near real usage
-- [[Incident: GitLab Runner CPU reservation]] (`work/incidents/`) — the
-  first documented instance of the HPA-driven CPU reservation exhaustion
-- **Latent synthesis:** if 2+ more incidents show CPU-request over-provisioning
-  or memory-HPA misconfiguration, promote to
-  `[[Kubernetes Deployment Readiness Checklist]]`.
+- [[Incident: GitLab Runner CPU reservation]] (`work/incidents/`) — first
+  documented instance of HPA-driven CPU reservation exhaustion
+- **Latent synthesis:** if 2+ more incidents show CPU-request
+  over-provisioning or memory-HPA misconfiguration, promote to
+  `Kubernetes Deployment Readiness Checklist`.
+
+### AWS network infrastructure
+
+- [[aws-tf-network]] — single-VPC (10.51.0.0/16, us-west-2), 4-env
+  subnet tiers, VPN + peerings; 8 known issues documented
+- [[AWS ALB]] / [[AWS NLB]] — [[aws-elbv2-alb-nlb|ELBv2 operational patterns]]
+  (listener drift, NLB-in-front destroy order, TLS remediation history)
+- [[.NET Framework TLS]] — Windows 2016 + `SchUseStrongCrypto` /
+  `SystemDefaultTlsVersions`; TLS 1.3 upgrade blockers for legacy
+  workloads (e.g. bullzip SQS consumer stall incident)
 
 ### macOS networking / VPN
 
-- [[Solution: VPN fails when another VPN/ZTNA agent installed]] — Zscaler
-  Z-Tunnel steals per-host routes for the outer VPN's gateway; diagnosis
-  via `route -n get <ip>`; CGNAT range (100.64.0.0/10) as fingerprint
+- [[Zscaler ZPA route hijack]] — canonical solution page (formally
+  [[Solution: VPN fails when another VPN/ZTNA agent installed]]).
+  Backed by **three** lived incidents in 10 days (FortiClient IPsec,
+  partner SFTP TCP RST, AWS EC2 CI runner SSH silent timeout).
+  Third-occurrence rule triggered → escalation is now a ZPA policy
+  scope review, not per-host bypass tickets.
 
 ### Incident communication
 
 - [[Outage channel announcement runbook]] — CyberSoft `! IMP - Outages`
   channel format for live incident + inline Sev-3 postmortem
+- [[Ops communication templates]] — portable maintenance / change /
+  outage / postmortem templates with connected worked samples
 
 ### Kephaleos itself
 
-- [[CLAUDE.md]] — Phase 1.1 knowledge-maintainer charter
+- `CLAUDE.md` — Phase 1.1 knowledge-maintainer charter
 - [[Learning: Kephaleos must be accessible from any working directory]]
 
 ---
 
 ## Important syntheses
 
-*(none yet — one is latent: Kubernetes deployment readiness.)*
+- **Zscaler ZPA hijack pattern (3 incidents → one canonical solution).**
+  Same machine, three unrelated destinations in 10 days: corp FortiGate
+  IPsec (UDP timeout), partner SFTP (fast TCP RST), employer EC2 CI
+  runner SSH (silent timeout + ICMP). Fingerprint: `route -n get <ip>`
+  shows CGNAT-range next-hop (100.64.0.0/10). Solution page carries the
+  synthesis: escalate from per-host bypass tickets to a ZPA policy
+  scope review; watch for stacked failure modes (ZPA hijack + SG
+  allow-list mismatch) on employer-owned targets.
+- *Latent:* Kubernetes deployment readiness checklist — 1 documented
+  incident so far; needs 2+ more.
 
 ---
 
 ## Current knowledge gaps
 
+- **Missing K8s learnings** with 3+ inbound references but no canonical
+  page: `Cluster autoscaler empty NotTriggerScaleUp means missing ASG
+  discovery tags` (cited from Techstyle, `duplo-prd-usw2`, NorthStar)
+  and `Requests-vs-usage divergence starves cluster capacity` (cited
+  from NorthStar).
 - **Proton VPN + FortiClient behavior.** Proton's WireGuard extension is
-  present but inactive on the user's machine. If enabled, a similar
-  routing conflict is possible. No capture yet.
+  present but inactive. If enabled, a similar routing conflict is
+  possible. No capture yet.
 - **Right-sizing follow-up on `ccsi-msd-prd`.** Follow-ups from the
-  GitLab runner incident (raise `sbiqai` `requests.memory`, lower
+  GitLab-runner incident (raise `sbiqai` `requests.memory`, lower
   `requests.cpu`, extend review to `tasktile` / `cybersoft-dtr` /
   `adminsynonyms`, add `Pending`-pod alert) — outcomes not yet captured.
-- **Zscaler bypass ticket outcome.** Whether IT added the FortiGate IP
-  to the ZPA bypass list — durable fix is not yet confirmed.
-- **Decisions folder is empty.** No ADR-style decisions captured yet;
-  the highest-value knowledge type (charter §18) has zero entries.
+- **ZPA policy scope review with IT.** The third-occurrence rule
+  triggered on 2026-09-22 recommends a broader ZPA policy conversation
+  (narrow ZCC hijack scope or maintain a bypass list). Outcome of that
+  conversation not yet captured.
+- **Colpali git-history rewrite.** Local force-rewrite prepared but not
+  pushed. Credentials already rotated (safety net closed), so this is
+  hygiene rather than risk — but the loop stays open until the push
+  lands and mirrors catch up.
 
 ---
 
