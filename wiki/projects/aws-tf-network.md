@@ -2,7 +2,7 @@
 type: project
 status: active
 created: 2026-09-13
-updated: 2026-09-13
+updated: 2026-09-15
 aliases:
   - "AWS TF Network"
   - "aws-tf-network"
@@ -130,6 +130,51 @@ they live elsewhere.
   the `.tf` config get removed. One commit per env-scope so any
   rollback is surgical. Deleting `.tf` before `destroy` orphans state
   and leaves live infra unmanaged.
+- **ALB-behind-NLB destroy order.** Destroy the NLB stack **before**
+  the ALB stack. See [[aws-elbv2-alb-nlb]] §3 for the full trap.
+- **Manual tag policy is applied via AWS console after TF creation.**
+  Every ALB/target-group plan shows drift for `Department` / `Team` /
+  `Owner` / `ManagedBy` plus lowercase `Environment` / `Project`.
+  **Do not "fix" this back to the TF values** — adopt the manual tags
+  into TF so plans go clean. Team-ownership map, as observed 2026-09-14:
+
+  | Service family | `Department` | `Team` |
+  |---|---|---|
+  | taskmanager · encodingtool · esfuse · sbiq-app · staging-blobman | `mis` | `mis-msd` |
+  | nationwideloans · blobman (dev/prod) · conditionsai | `de-ai` | `ai` |
+  | airflow-llmsplitter (uat/prod) | `de-ai` | `de` |
+  | unstract-lte | `sharedresource` | *(no Team tag)* |
+
+  Standard reconciled tag block:
+  ```hcl
+  tags = {
+    Project     = "<lowercase-with-hyphens>"
+    Environment = "<lowercase-env>"
+    Department  = "<from table>"
+    Team        = "<from table>"    # omit if sharedresource
+    Owner       = "DevOps"
+    ManagedBy   = "Terraform"
+  }
+  ```
+
+  Only `aws_lb` and `aws_lb_target_group` tags show drift in practice;
+  listener tags in AWS still match the pre-drift TF values, so leave
+  them alone.
+- **Verify `aws_lb` liveness before `terraform apply` on any stack.**
+  Many `services/*/elb/` stacks are ghost TF — code exists but the
+  ALB was never created (or was destroyed without cleanup). Running
+  `terraform apply` in a ghost stack creates a **new** ALB you don't
+  want. Verify first:
+
+  ```bash
+  aws elbv2 describe-load-balancers --names <alb-name> \
+    --region us-west-2 --profile cybersoftbpo-jhf \
+    --query 'LoadBalancers[0].State.Code' --output text
+  ```
+
+  Observed 2026-09-14: 6 of 12 Category A stacks + 13 of 28 Category B
+  stacks were ghost — TF exists, no live AWS resource. Candidates for
+  cleanup rather than apply.
 
 ## Key decisions
 
@@ -138,6 +183,49 @@ they live elsewhere.
 if this project ever gets touched heavily.)*
 
 ## History (durable to remember)
+
+- **2026-09-15 · bullzip SQS consumer stall (unrelated to TLS
+  remediation).** `auto_bullzip_queue_production` backed up to 22
+  messages, 0 in-flight — production team bypassed a task via bullzip and
+  the downstream SQS consumer couldn't resolve the task record for its
+  update step. Head-of-line blocked, no DLQ. **Notable side-discovery:**
+  the Windows Server 2016 host `AWS-DU` had `SchUseStrongCrypto` set on
+  the 64-bit registry hive but **not on `WOW6432Node`** — 32-bit .NET
+  Framework services on that host default to TLS 1.0/SSL 3.0. Was not
+  the cause of the SQS incident but is a latent risk against any future
+  ALB tightening. Full record:
+  [[work/incidents/2026-09-15-bullzip-sqs-consumer-stall]]. Follow-ups
+  queued: DLQ for the queue, CloudWatch alarm on depth, consumer
+  fix for not-found tasks, and audit of Windows-host TLS registry drift.
+
+- **2026-09-13 → 2026-09-14 · SSL/TLS weak-protocol remediation.**
+  Branch `devops/alb-weak-tls-remediation` (26 commits). Fleet-wide
+  bump of all live ALB listeners to `ELBSecurityPolicy-TLS13-1-3-2021-06`
+  (TLS 1.3 only). Two problem classes fixed:
+
+  **Category A (12 files, 6 live ALBs):** HTTPS listener had no
+  `ssl_policy` at all — AWS was silently applying
+  `ELBSecurityPolicy-2016-08` (allows TLS 1.0/1.1). This was the
+  root cause of the scanner finding. Details in [[aws-elbv2-alb-nlb]] §1.
+
+  **Category B (28 files, 15 live ALBs):** Previously on
+  `ELBSecurityPolicy-FS-1-2-2019-08` (TLS 1.2 + FS, includes CBC ciphers).
+  Not weak protocol, but bumped for consistency and to survive strict
+  cipher scans.
+
+  **Applied to 19 ALBs; 2 decommissioned mid-sweep** (`alb-prod-unstractlte`,
+  `alb-tblextraction`). One ghost-stack cleanup done in-branch
+  (`services/develop/elb/alb-sbiq-app/` removed).
+
+  **Bundled side-fixes** during the sweep:
+  - Reconciled manual tag drift on 15 stacks (see Conventions).
+  - Fixed misspelled tag `Deparment` → `Department` on `alb-prod-nwl-app`.
+  - Preserved health_check tuning on prod sbiq-app (60s/10s vs TF's 5s/3s).
+  - Preserved `idle_timeout = 600` on staging sbiq-app.
+
+  **Follow-ups queued** — decom candidates for a separate PR:
+  `alb-prod-taskmanager-03` (empty target groups, 0 traffic since
+  2024-08 creation) plus its `nlb-prod-taskmanager-03` twin.
 
 - **2026-09-13 · DO-1922 · Duplicate-service cleanup + truoffer
   decommission.** Retired the legacy `services/<env>/ecs/service/`
@@ -184,6 +272,16 @@ Surfaced while writing `docs/known-issues.md` in the repo. All are
    `terraform fmt/validate/plan` on MRs.
 8. **No `.tflint.hcl` / `.terraform-docs.yml` / `.pre-commit-config.yaml`.**
    No lint, no auto-doc.
+9. **Ghost TF stacks under `services/*/elb/`.** ~19 of 40+ stacks have
+   TF but no live AWS ALB. `terraform apply` in a ghost stack creates
+   a rogue LB. Discovered while running the 2026-09 TLS remediation —
+   always `aws elbv2 describe-load-balancers` before applying. See
+   Conventions section for the check.
+10. **`alb-prod-taskmanager-03` zombie.** Structural clone of
+    `alb-prod-taskmanager` (2024-08-12) with 0 targets and 0 traffic
+    since creation. Its NLB twin `nlb-prod-taskmanager-03` is
+    internet-facing and pointing at nothing — public attack surface
+    for zero benefit. Decom candidate.
 
 ## Documentation state (post-2026-09-13 pass)
 
@@ -206,6 +304,10 @@ pre-commit hooks, real `.gitlab-ci.yml`.
 
 ## Related
 
+- [[aws-elbv2-alb-nlb]] — AWS ALB/NLB operational patterns (weak-default
+  `ssl_policy`, ALB-behind-NLB destroy trap, TLS 1.3 client compat,
+  listener representation drift) — the durable technical knowledge
+  behind the 2026-09 remediation.
 - [[k8s-gitlab-runner]] — sibling CyberSoft DevOps project; workloads
   in `services/` may be deployed by this runner.
 - [[Runbook: GitLab Runner token rotation]] — same GitLab instance
