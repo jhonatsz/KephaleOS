@@ -43,7 +43,7 @@ updated: 2026-10-02
 
 - ZPA policy scope review with IT — under-pressure deferral documented; may need to reopen if Mode B keeps firing on travel/tethering days
 - Right-sizing follow-up outcomes on `ccsi-msd-prd` (sbiqai + 3 adjacent workloads)
-- Phase II trigger criteria — currently undefined (charter §28 forbids Phase II features but gives no entry threshold); candidate for a `wiki/decisions/phase-ii-triggers.md` while Phase I pains are vivid
+- Phase II trigger criteria — closed 2026-10-02 by [[wiki/decisions/2026-10-02-phase-ii-triggers]] (ADR #3; first prospective decision in vault)
 
 ## Inbox
 
