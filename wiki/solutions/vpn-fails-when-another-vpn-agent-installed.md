@@ -9,12 +9,16 @@ aliases:
   - "Zscaler + FortiClient routing hijack"
   - "Zscaler ZPA route hijack"
   - "ZPA hijacking arbitrary destination"
-tags: [vpn, networking, macos, zscaler, forticlient, ztna, ipsec, routing, sftp, ssh, aws]
+  - "Zscaler stale NetworkExtension claim"
+  - "EADDRNOTAVAIL on Microsoft 365 after ISP switch"
+  - "MS Teams offline despite internet working"
+tags: [vpn, networking, macos, zscaler, forticlient, ztna, ipsec, routing, sftp, ssh, aws, teams, microsoft-365]
 sources:
   - "[[raw/notes/2026-09-12-forticlient-ipsec-vs-zscaler]]"
   - "[[raw/notes/2026-09-15-zpa-hijack-partner-sftp]]"
   - "[[raw/notes/2026-09-22-zpa-hijack-ec2-runner-ssh]]"
   - "[[raw/notes/2026-10-01-0456-zpa-route-command]]"
+  - "[[raw/notes/2026-10-01-teams-offline-isp-switch-stale-ne]]"
 confidence: high
 ---
 
@@ -22,16 +26,41 @@ confidence: high
 
 ## Quick fix (mid-incident)
 
+**First decide which failure mode you're in** — the two modes have different fixes:
+
 ```bash
-route -n get <gateway-ip>                                    # hijack if interface=utun*, gateway=100.64.0.*
+# Diagnose which mode:
+route -n get <destination-ip>
+nc -zv <destination-ip> 443        # time how fast it fails
+```
+
+| Fingerprint | Mode | Quick fix |
+| --- | --- | --- |
+| `route` → `utun*` / `100.64.0.*` gateway; connect **times out** or returns **TCP RST** | **Mode A — FIB route hijack** | `sudo route delete/add` to LAN gateway (below) |
+| `route` → clean (`en0`, LAN gateway); connect fails with `Can't assign requested address` (`EADDRNOTAVAIL`) **in <100 ms** | **Mode B — stale NE claim** | `sudo pkill -HUP ZscalerTunnel` |
+
+### Mode A — route-table hijack
+
+```bash
 sudo route -n delete <gateway-ip>
 sudo route -n add -host <gateway-ip> -gateway <lan-gateway>  # LAN gateway, e.g. 192.168.68.1
 route -n get <gateway-ip>                                    # verify: interface=en0
-# → then Connect in the VPN client
+# → then Connect in the VPN client / retry the destination
 ```
 
-Temporary. Dies on reboot / Wi-Fi change / offending agent's next policy
-sync. Read §Fix for the durable path (admin-side bypass list).
+### Mode B — stale NetworkExtension (after ISP / Wi-Fi switch)
+
+```bash
+sudo pkill -HUP ZscalerTunnel
+sleep 5
+ifconfig | grep -A1 utun | grep "inet "    # expect utun4 to re-appear with 100.64.0.1
+nc -zv <destination-ip> 443                # expect "succeeded"
+```
+
+Both quick fixes are **temporary**. Mode A dies on reboot / Wi-Fi change /
+offending agent's next policy sync. Mode B dies on the next ISP switch
+when the NE re-enters a stale state. Read §Fix for the durable path
+(admin-side bypass list / policy scope review).
 
 **Third-occurrence rule:** if this pattern hits a third destination on
 the same machine, stop filing per-host bypass tickets and ask IT for a
@@ -67,32 +96,61 @@ ssh: connect to host <host> port <port>: Connection refused
 Source packets appear to originate from a **CGNAT** address (100.64.0.0/10)
 rather than the physical interface's address.
 
-### Timeout vs. Connection refused — a scope fingerprint
+### Three symptom shapes — two distinct enforcement layers
 
-Two symptom shapes have been observed for the same underlying hijack:
+Three failure modes observed on the same machine for the same culprit
+family (Zscaler Client Connector):
 
-| Symptom | What it means |
-| --- | --- |
-| Silent **timeout** (UDP: IKE Phase-1; TCP: hang) | Destination is inside ZCC's tunnel scope; ZCC is trying to forward, other side never answers |
-| Fast **connection refused** (TCP RST) | Destination route is hijacked but ZCC has no policy rule allowing it; ZCC synthesizes RST |
+| Symptom | Enforcement layer | What it means |
+| --- | --- | --- |
+| Silent **timeout** (UDP: IKE Phase-1; TCP: hang) | FIB (route table) | Destination is inside ZCC's tunnel scope; ZCC forwards into Z-Tunnel, other side never answers |
+| Fast **TCP RST** (connection refused in ~1 s) | FIB (route table) | Destination route is hijacked but ZCC has no policy rule allowing it; ZCC synthesizes RST |
+| **`EADDRNOTAVAIL`** / "Can't assign requested address" in **<100 ms** | Socket layer (NetworkExtension) | ZCC's NEPacketTunnelProvider still holds the destination route-claim but has no valid IPv4 source on its utun (common after ISP/Wi-Fi switch); kernel refuses the socket bind |
 
-Both cases have the same root cause (`route -n get` shows `utun*` /
-CGNAT gateway) and the same fix. This distinction only helps predict
-whether an IT bypass ticket or an App Segment addition is the right
-policy ask — see below.
+**The first two share a fingerprint** — `route -n get <destination>` returns
+`utun*` / CGNAT (`100.64.0.0/10`) gateway. Fix: route override to LAN
+gateway (Mode A).
+
+**The third is distinct.** `route -n get` returns a clean physical
+interface, so the FIB looks correct. But the ZCC NE sits *above* the FIB
+in the socket path (via `NEIPv4Settings.includedRoutes`), still claiming
+the destination. With no local address on the tunnel, binds fail
+instantly. Fix: restart the daemon so the NE re-registers (Mode B).
+
+These distinctions help predict the right policy ask:
+
+- Mode A/B pointing at *external* destinations (partner infra, public SaaS)
+  → IT bypass ticket, or scope-review escalation after 3+ incidents.
+- Mode A/B pointing at *employer* destinations → sometimes it's a missing
+  **App Segment** entry rather than needing a bypass; ask IT which.
 
 ## Root cause
 
 A second VPN/ZTNA agent (**Zscaler Client Connector**, Cloudflare WARP,
-Tailscale, Twingate, Netskope, ProtonVPN's split-tunnel proxy, etc.) has
-installed a **per-host route** that steals traffic to the target VPN
-gateway into its own tunnel. IKE / control-plane packets never reach the
-real gateway, so the outer VPN never completes negotiation.
+Tailscale, Twingate, Netskope, ProtonVPN's split-tunnel proxy, etc.)
+holds the traffic for the target destination at one of two layers.
 
-Specifically for Zscaler ZPA: if the ZPA App Segment list includes (or
-overlaps) the outer VPN's gateway IP, ZCC's packet-tunnel provider
-programs a host route to `100.64.0.1` (Z-Tunnel) for that destination,
-overriding the default route.
+**Mode A — FIB route hijack (route-table interception).** The ZTNA agent
+has installed a **per-host route** that steals traffic to the target IP
+into its own tunnel. For Zscaler ZPA: if the ZPA App Segment list
+includes (or overlaps) the destination's IP, ZCC's packet-tunnel
+provider programs a host route to `100.64.0.1` (Z-Tunnel), overriding
+the default route. Packets reach the tunnel but never the real
+destination (or get RST'd if ZCC has no matching allow rule).
+
+**Mode B — stale NetworkExtension socket-layer claim.** macOS routes
+destinations into a NetworkExtension via `NEIPv4Settings.includedRoutes`,
+which sits **above the FIB** in the socket path. On a network context
+change (ISP switch, Wi-Fi reassociate, carrier handoff), the tunnel
+should re-register with the new interface's addresses. The known ZCC
+bug: the NE **keeps the destination claim** but **loses its own IPv4
+assignment** on utun — the kernel then can't bind a source address for
+sockets to claimed destinations, returning `EADDRNOTAVAIL` immediately.
+The FIB looks clean because the NE's claim doesn't live in it. Only
+destinations in the NE claim list are affected; everything else goes
+direct and works. GUI toggles for ZIA/ZPA don't clear the stale claim
+because they operate above the system LaunchDaemon layer; only a daemon
+restart does.
 
 ## Fix
 
@@ -195,20 +253,23 @@ Then immediately initiate the VPN connection. Caveats:
 
 ## Related
 
-- [[raw/notes/2026-09-12-forticlient-ipsec-vs-zscaler]] — first lived incident (FortiClient IPsec, timeout shape)
-- [[raw/notes/2026-09-15-zpa-hijack-partner-sftp]] — second lived incident (arbitrary TCP SFTP, refused shape)
-- [[raw/notes/2026-09-22-zpa-hijack-ec2-runner-ssh]] — third lived incident (AWS EC2 CI runner, SSH 22, silent timeout shape)
+- [[raw/notes/2026-09-12-forticlient-ipsec-vs-zscaler]] — incident #1 (FortiClient IPsec, FIB hijack, timeout shape)
+- [[raw/notes/2026-09-15-zpa-hijack-partner-sftp]] — incident #2 (arbitrary TCP SFTP, FIB hijack, RST shape)
+- [[raw/notes/2026-09-22-zpa-hijack-ec2-runner-ssh]] — incident #3 (AWS EC2 CI runner, SSH 22, FIB hijack, silent timeout shape)
+- [[raw/notes/2026-10-01-teams-offline-isp-switch-stale-ne]] — incident #4 (MS Teams signaling, **stale NE** shape — new mode)
 
 ## Recurring-problem note
 
-As of 2026-09-22 this pattern has bitten **three times in ten days** on
-the same machine, against three unrelated destinations:
+As of 2026-10-01 this pattern has bitten **four times in ~20 days** on
+the same machine, against four unrelated destination classes and spanning
+**two distinct enforcement layers**:
 
-| Date | Destination | Owner | Symptom |
-| --- | --- | --- | --- |
-| 2026-09-12 | Corp FortiGate (IPsec) | Employer | UDP IKE timeout |
-| 2026-09-15 | Partner SFTP (TCP 2233) | Third party | Fast TCP RST |
-| 2026-09-22 | Employer AWS EC2 CI runner (SSH 22) | Employer | Silent TCP + ICMP timeout |
+| Date | Destination | Owner | Mode | Symptom |
+| --- | --- | --- | --- | --- |
+| 2026-09-12 | Corp FortiGate (IPsec) | Employer | A (FIB) | UDP IKE timeout |
+| 2026-09-15 | Partner SFTP (TCP 2233) | Third party | A (FIB) | Fast TCP RST |
+| 2026-09-22 | Employer AWS EC2 CI runner (SSH 22) | Employer | A (FIB) | Silent TCP + ICMP timeout |
+| 2026-10-01 | MS Teams signaling (52.123/16) | Microsoft public SaaS | **B (stale NE)** | `EADDRNOTAVAIL` after ISP switch; cleared by `pkill -HUP ZscalerTunnel` |
 
 **Third-occurrence rule triggered.** Stop filing per-host bypass tickets.
 The right ask is a **ZPA policy scope review** with IT: ZCC's hijack
@@ -232,7 +293,7 @@ directly, avoiding both problems in one step.
 The escalation ask above is what the third-occurrence rule *recommends*.
 What the operator *actually does* is different: keep using the local
 `route` command each time the hijack fires, and skip the IT
-conversation. Operator's own note (2026-10-01):
+conversation. Operator's own note (2026-10-01, morning):
 
 > "for ZPA i just stick to route command to fix it"
 
@@ -254,12 +315,35 @@ Two things this tells future-me:
    route), *that* is when the escalation actually happens. Track this
    in the table above.
 
-Source: [[raw/notes/2026-10-01-0456-zpa-route-command]].
+**Update (2026-10-01, evening) — incident #4 landed, and it needed a
+different quick-fix than the operator's documented preference.** MS Teams
+went offline after an ISP switch; `route` command was *not* the fix
+because the FIB was already clean. The failure mode was the stale-NE
+one (Mode B), which only responds to `pkill -HUP ZscalerTunnel`. This
+means the operator's "I just stick to the route command" heuristic is
+necessary-but-not-sufficient. The expanded quick-fix family is now:
+
+- Mode A (FIB hijack, `utun*` in `route get`) → `route delete/add`
+- Mode B (stale NE, `EADDRNOTAVAIL` with clean route) → `pkill -HUP ZscalerTunnel`
+
+Diagnosis takes ~10 seconds (`route -n get <ip>` + `nc -zv <ip> <port>`)
+and determines which. The friction-ranking argument still stands — both
+quick fixes are faster than an IT ticket — but the Mode B evidence
+weakens the "local fixes are always enough" case: this new mode has a
+different trigger surface (ISP switch) that will keep firing on travel
+days and tethering, so the recurrence rate may rise.
+
+Source: [[raw/notes/2026-10-01-0456-zpa-route-command]] (morning
+preference statement) and [[raw/notes/2026-10-01-teams-offline-isp-switch-stale-ne]]
+(evening incident #4).
 
 ## Sources
 
 - Live troubleshooting session, 2026-09-12 (see raw note)
 - Live troubleshooting session, 2026-09-15 (see raw note)
 - Live troubleshooting session, 2026-09-22 (see raw note)
-- Operator practice note, 2026-10-01 — chooses local `route` fix over IT
-  escalation (see raw note)
+- Operator practice note, 2026-10-01 morning — chooses local `route` fix
+  over IT escalation (see raw note)
+- Live troubleshooting session, 2026-10-01 evening — Teams offline after
+  ISP switch, new Mode B stale-NE failure identified and fixed via
+  `pkill -HUP ZscalerTunnel` (see raw note)
