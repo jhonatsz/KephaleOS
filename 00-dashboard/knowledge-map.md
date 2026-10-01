@@ -1,7 +1,6 @@
 ---
 type: dashboard
-updated: 2026-10-01
----
+updated: 2026-10-01---
 
 # Knowledge Map
 
@@ -81,10 +80,14 @@ canonical pages (avoiding broken-link noise for lint):
 
 - [[Zscaler ZPA route hijack]] — canonical solution page (formally
   [[Solution: VPN fails when another VPN/ZTNA agent installed]]).
-  Backed by **three** lived incidents in 10 days (FortiClient IPsec,
-  partner SFTP TCP RST, AWS EC2 CI runner SSH silent timeout).
-  Third-occurrence rule triggered → escalation is now a ZPA policy
-  scope review, not per-host bypass tickets.
+  Backed by **four** lived incidents in ~20 days (FortiClient IPsec,
+  partner SFTP TCP RST, AWS EC2 CI runner SSH silent timeout, MS Teams
+  signaling after ISP switch). Covers **two distinct enforcement
+  layers**: Mode A (FIB route hijack — fix with `route delete/add`)
+  and Mode B (stale NetworkExtension claim after network context change
+  — fix with `pkill -HUP ZscalerTunnel`). Third-occurrence rule
+  triggered → escalation is now a ZPA policy scope review, not per-host
+  bypass tickets.
 
 ### Incident communication
 
@@ -102,14 +105,20 @@ canonical pages (avoiding broken-link noise for lint):
 
 ## Important syntheses
 
-- **Zscaler ZPA hijack pattern (3 incidents → one canonical solution).**
-  Same machine, three unrelated destinations in 10 days: corp FortiGate
-  IPsec (UDP timeout), partner SFTP (fast TCP RST), employer EC2 CI
-  runner SSH (silent timeout + ICMP). Fingerprint: `route -n get <ip>`
-  shows CGNAT-range next-hop (100.64.0.0/10). Solution page carries the
-  synthesis: escalate from per-host bypass tickets to a ZPA policy
-  scope review; watch for stacked failure modes (ZPA hijack + SG
-  allow-list mismatch) on employer-owned targets.
+- **Zscaler ZPA hijack pattern (4 incidents → one canonical solution, two
+  modes).** Same machine, four unrelated destinations in ~20 days: corp
+  FortiGate IPsec (UDP timeout), partner SFTP (fast TCP RST), employer
+  EC2 CI runner SSH (silent timeout + ICMP), and MS Teams signaling
+  after ISP switch (`EADDRNOTAVAIL` in <100 ms). Fingerprints:
+  **Mode A (FIB hijack)** → `route -n get <ip>` shows CGNAT-range
+  next-hop (100.64.0.0/10); fix with route override. **Mode B (stale
+  NE)** → `route` is clean but socket bind returns `EADDRNOTAVAIL`
+  immediately; fix with `pkill -HUP ZscalerTunnel`. GUI toggles for
+  ZIA/ZPA do not clear Mode B — the stale claim lives in the system
+  LaunchDaemon layer. Solution page carries the synthesis: escalate
+  from per-host bypass tickets to a ZPA policy scope review; watch for
+  stacked failure modes (ZPA hijack + SG allow-list mismatch) on
+  employer-owned targets.
 - **[[Kubernetes Deployment Readiness Checklist]]** (2026-10-01,
   promoted from latent). 6-item pre-deploy checklist that closes the
   compound failure mode of poorly-calibrated `requests` + broken
@@ -129,10 +138,17 @@ canonical pages (avoiding broken-link noise for lint):
   GitLab-runner incident (raise `sbiqai` `requests.memory`, lower
   `requests.cpu`, extend review to `tasktile` / `cybersoft-dtr` /
   `adminsynonyms`, add `Pending`-pod alert) — outcomes not yet captured.
-- **ZPA policy scope review with IT.** The third-occurrence rule
-  triggered on 2026-09-22 recommends a broader ZPA policy conversation
-  (narrow ZCC hijack scope or maintain a bypass list). Outcome of that
-  conversation not yet captured.
+- **ZPA policy scope review with IT — deferral under pressure (incident
+  #4 added evidence).** Third-occurrence rule triggered on 2026-09-22;
+  operator preferred the local `route` fix (2026-10-01 morning). Then
+  2026-10-01 evening landed incident #4 — a different failure mode
+  (stale NE, `EADDRNOTAVAIL`) that **does not respond to the route
+  command**; required `pkill -HUP ZscalerTunnel`. The friction-ranking
+  argument still holds (both quick fixes beat an IT ticket in the
+  moment), but Mode B's trigger surface is "any ISP/Wi-Fi switch",
+  which will keep firing on travel days and tethering. Watch for this
+  to flip the ranking at the next incident. See [[Zscaler ZPA route
+  hijack]] §"In practice".
 - **Colpali git-history rewrite.** Local force-rewrite prepared but not
   pushed. Credentials already rotated (safety net closed), so this is
   hygiene rather than risk — but the loop stays open until the push
