@@ -130,27 +130,9 @@ A second VPN/ZTNA agent (**Zscaler Client Connector**, Cloudflare WARP,
 Tailscale, Twingate, Netskope, ProtonVPN's split-tunnel proxy, etc.)
 holds the traffic for the target destination at one of two layers.
 
-**Mode A — FIB route hijack (route-table interception).** The ZTNA agent
-has installed a **per-host route** that steals traffic to the target IP
-into its own tunnel. For Zscaler ZPA: if the ZPA App Segment list
-includes (or overlaps) the destination's IP, ZCC's packet-tunnel
-provider programs a host route to `100.64.0.1` (Z-Tunnel), overriding
-the default route. Packets reach the tunnel but never the real
-destination (or get RST'd if ZCC has no matching allow rule).
+**Mode A — FIB route hijack (route-table interception).** The ZTNA agent has installed a **per-host route** that steals traffic to the target IP into its own tunnel. For Zscaler ZPA: if the ZPA App Segment list includes (or overlaps) the destination's IP, ZCC's packet-tunnel provider programs a host route to `100.64.0.1` ([[wiki/concepts/cgnat-100.64.0.0-10|CGNAT]], the Z-Tunnel's local address), overriding the default route. Packets reach the tunnel but never the real destination (or get RST'd if ZCC has no matching allow rule).
 
-**Mode B — stale NetworkExtension socket-layer claim.** macOS routes
-destinations into a NetworkExtension via `NEIPv4Settings.includedRoutes`,
-which sits **above the FIB** in the socket path. On a network context
-change (ISP switch, Wi-Fi reassociate, carrier handoff), the tunnel
-should re-register with the new interface's addresses. The known ZCC
-bug: the NE **keeps the destination claim** but **loses its own IPv4
-assignment** on utun — the kernel then can't bind a source address for
-sockets to claimed destinations, returning `EADDRNOTAVAIL` immediately.
-The FIB looks clean because the NE's claim doesn't live in it. Only
-destinations in the NE claim list are affected; everything else goes
-direct and works. GUI toggles for ZIA/ZPA don't clear the stale claim
-because they operate above the system LaunchDaemon layer; only a daemon
-restart does.
+**Mode B — stale [[wiki/concepts/macos-network-extension|NetworkExtension]] socket-layer claim.** macOS routes destinations into a NetworkExtension via `NEIPv4Settings.includedRoutes`, which sits **above the FIB** in the socket path (see the concept page for the two-stage connect() diagram). On a network context change (ISP switch, Wi-Fi reassociate, carrier handoff), the tunnel should re-register with the new interface's addresses. The known ZCC bug: the NE **keeps the destination claim** but **loses its own IPv4 assignment** on utun — the kernel then can't bind a source address for sockets to claimed destinations, returning `EADDRNOTAVAIL` immediately. The FIB looks clean because the NE's claim doesn't live in it. Only destinations in the NE claim list are affected; everything else goes direct and works. GUI toggles for ZIA/ZPA don't clear the stale claim because they operate above the system LaunchDaemon layer; only a daemon restart does.
 
 ## Fix
 
