@@ -161,6 +161,16 @@ canonical pages (avoiding broken-link noise for lint):
   pushed. Credentials already rotated (safety net closed), so this is
   hygiene rather than risk — but the loop stays open until the push
   lands and mirrors catch up.
+- **Phase II trigger criteria — formally defined 2026-10-02.** The gap
+  "when does Phase II start?" is closed by
+  [[wiki/decisions/2026-10-02-phase-ii-triggers]] — a prospective ADR
+  defining concrete entry triggers (inbox-age, recall-miss rate, canonical
+  page count, manual-sync friction, LLM cost, retrieval latency) for each
+  class of Phase 1.1-forbidden feature, their adoption order within Phase
+  II (embeddings first, autonomous agents last / Phase III only), and
+  the cross-phase hard limits (portability, no secrets, no auto-overwrite,
+  no autonomous `wiki/` writes). No feature adopted today — this is the
+  ladder, not the step.
 
 ---
 
