@@ -71,9 +71,10 @@ at the claimed interface. Always run both.
 ## Mode A — FIB route hijack (fix in 30 s)
 
 **Fingerprint recap.** `route get <ip>` shows `interface: utun*` or
-`gateway: 100.64.0.*`. Classic Zscaler ZPA / Cloudflare WARP / Tailscale
-pattern: the agent installed a per-host route stealing traffic into its
-own tunnel.
+`gateway: 100.64.0.*` ([[wiki/concepts/cgnat-100.64.0.0-10|CGNAT space]]
+— a client-side tunnel's local address). Classic Zscaler ZPA / Cloudflare
+WARP / Tailscale pattern: the agent installed a per-host route stealing
+traffic into its own tunnel.
 
 **Fix:**
 
@@ -92,12 +93,15 @@ nc -zv $IP $PORT                               # expect: succeeded
   silently reverts, the local fix won't stick → ask IT for an App Segment
   bypass instead (see §Durable fix).
 
-## Mode B — stale NetworkExtension (fix in 10 s)
+## Mode B — stale [[wiki/concepts/macos-network-extension|NetworkExtension]] (fix in 10 s)
 
 **Fingerprint recap.** `route get <ip>` looks clean (physical interface,
 LAN gateway) **but** `nc` returns `Can't assign requested address` in
 under 100 ms. The ZCC NetworkExtension still holds the destination
-route-claim but lost its tunnel's IPv4 source — kernel can't bind.
+route-claim but lost its tunnel's IPv4 source — kernel can't bind. See
+the [[wiki/concepts/macos-network-extension|NE concept page]] for the
+two-stage connect() diagram that explains why `route get` reports clean
+while the connection still fails.
 
 **Why it happens.** Network context changed (ISP switch, Wi-Fi reassociate,
 carrier handoff, laptop wake-from-sleep across networks) and the NE's

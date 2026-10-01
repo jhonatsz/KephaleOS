@@ -108,6 +108,16 @@ canonical pages (avoiding broken-link noise for lint):
 
 - `CLAUDE.md` — Phase 1.1 knowledge-maintainer charter
 - [[Learning: Kephaleos must be accessible from any working directory]]
+- [[wiki/decisions/2026-10-02-phase-ii-triggers]] — ladder for allowing any charter-§28-forbidden feature (embeddings, RAG, external ingestion, local models, etc.) with concrete measurable triggers and cross-phase hard limits
+
+### Networking concepts (new 2026-10-02)
+
+First two canonical concept pages — seeded to deduplicate the inline restatements that had grown across the ZPA synthesis:
+
+- [[wiki/concepts/cgnat-100.64.0.0-10|CGNAT (100.64.0.0/10)]] — RFC 6598 Shared Address Space; the fingerprint IP range used by ZCC/WARP/Tailscale/Twingate for their local `utun` addresses. Why a `100.64.*` entry in `route get` is near-pathognomonic for a client-side tunnel on a workstation.
+- [[wiki/concepts/macos-network-extension|macOS NetworkExtension]] — Apple's user-space framework for `NEPacketTunnelProvider`. Explains the two-stage connect() path (NE `includedRoutes` before FIB) that makes `route get` lie, and why the Mode B stale-NE failure in [[Zscaler ZPA route hijack]] is a structural consequence of the framework's design, not a Zscaler bug per se.
+
+Both concept pages are **referenced from** the solution/runbook/decision triplet (deduplication landed inline on each page), not standalone — the vault's design preference per charter §19 is compression into fewer, cross-linked pages, not more pages.
 
 ---
 
