@@ -253,6 +253,7 @@ Then immediately initiate the VPN connection. Caveats:
 
 ## Related
 
+- [[wiki/decisions/2026-10-01-zpa-escalation-deferral|Decision 2026-10-01: Defer the ZPA policy scope review]] — formal record of the escalation deferral, with revisit triggers
 - [[raw/notes/2026-09-12-forticlient-ipsec-vs-zscaler]] — incident #1 (FortiClient IPsec, FIB hijack, timeout shape)
 - [[raw/notes/2026-09-15-zpa-hijack-partner-sftp]] — incident #2 (arbitrary TCP SFTP, FIB hijack, RST shape)
 - [[raw/notes/2026-09-22-zpa-hijack-ec2-runner-ssh]] — incident #3 (AWS EC2 CI runner, SSH 22, FIB hijack, silent timeout shape)

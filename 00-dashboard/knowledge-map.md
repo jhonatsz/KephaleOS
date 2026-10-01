@@ -138,17 +138,14 @@ canonical pages (avoiding broken-link noise for lint):
   GitLab-runner incident (raise `sbiqai` `requests.memory`, lower
   `requests.cpu`, extend review to `tasktile` / `cybersoft-dtr` /
   `adminsynonyms`, add `Pending`-pod alert) — outcomes not yet captured.
-- **ZPA policy scope review with IT — deferral under pressure (incident
-  #4 added evidence).** Third-occurrence rule triggered on 2026-09-22;
-  operator preferred the local `route` fix (2026-10-01 morning). Then
-  2026-10-01 evening landed incident #4 — a different failure mode
-  (stale NE, `EADDRNOTAVAIL`) that **does not respond to the route
-  command**; required `pkill -HUP ZscalerTunnel`. The friction-ranking
-  argument still holds (both quick fixes beat an IT ticket in the
-  moment), but Mode B's trigger surface is "any ISP/Wi-Fi switch",
-  which will keep firing on travel days and tethering. Watch for this
-  to flip the ranking at the next incident. See [[Zscaler ZPA route
-  hijack]] §"In practice".
+- **ZPA policy scope review with IT — formal deferral recorded
+  2026-10-02.** Promoted from a floating note on the solution page to
+  [[wiki/decisions/2026-10-01-zpa-escalation-deferral|a recorded
+  decision]] with full why, alternatives, consequences, and five explicit
+  revisit triggers (recurrence rate, non-macOS-routable destination,
+  user-facing miss, work-laptop migration slip past 2026-12-31, EMS
+  scope broadening). This is no longer a gap — it's a documented decision
+  with trigger conditions.
 - **Colpali git-history rewrite.** Local force-rewrite prepared but not
   pushed. Credentials already rotated (safety net closed), so this is
   hygiene rather than risk — but the loop stays open until the push
