@@ -253,6 +253,7 @@ Then immediately initiate the VPN connection. Caveats:
 
 ## Related
 
+- [[wiki/runbooks/macos-vpn-ne-triage|Runbook: macOS VPN/NE triage]] — the 10-second decision-tree extraction of this page, for mid-incident use; this deep page is the context, that runbook is the reflex
 - [[wiki/decisions/2026-10-01-zpa-escalation-deferral|Decision 2026-10-01: Defer the ZPA policy scope review]] — formal record of the escalation deferral, with revisit triggers
 - [[raw/notes/2026-09-12-forticlient-ipsec-vs-zscaler]] — incident #1 (FortiClient IPsec, FIB hijack, timeout shape)
 - [[raw/notes/2026-09-15-zpa-hijack-partner-sftp]] — incident #2 (arbitrary TCP SFTP, FIB hijack, RST shape)

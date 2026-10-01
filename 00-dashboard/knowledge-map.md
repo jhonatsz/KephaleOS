@@ -88,6 +88,14 @@ canonical pages (avoiding broken-link noise for lint):
   — fix with `pkill -HUP ZscalerTunnel`). Third-occurrence rule
   triggered → escalation is now a ZPA policy scope review, not per-host
   bypass tickets.
+- [[wiki/runbooks/macos-vpn-ne-triage|Runbook: macOS VPN/NE triage]] —
+  10-second decision-tree extraction of the above solution page for
+  mid-incident use. Pairs the two diagnostic measurements (`nc -zv`
+  shape + `route get` interface) into a fingerprint table that routes
+  to Mode A / Mode B / "not this runbook" in one glance.
+- [[wiki/decisions/2026-10-01-zpa-escalation-deferral]] — formal ADR
+  behind why the operator keeps running the runbook rather than
+  escalating; five explicit revisit triggers.
 
 ### Incident communication
 
@@ -106,19 +114,22 @@ canonical pages (avoiding broken-link noise for lint):
 ## Important syntheses
 
 - **Zscaler ZPA hijack pattern (4 incidents → one canonical solution, two
-  modes).** Same machine, four unrelated destinations in ~20 days: corp
-  FortiGate IPsec (UDP timeout), partner SFTP (fast TCP RST), employer
-  EC2 CI runner SSH (silent timeout + ICMP), and MS Teams signaling
-  after ISP switch (`EADDRNOTAVAIL` in <100 ms). Fingerprints:
-  **Mode A (FIB hijack)** → `route -n get <ip>` shows CGNAT-range
-  next-hop (100.64.0.0/10); fix with route override. **Mode B (stale
-  NE)** → `route` is clean but socket bind returns `EADDRNOTAVAIL`
-  immediately; fix with `pkill -HUP ZscalerTunnel`. GUI toggles for
-  ZIA/ZPA do not clear Mode B — the stale claim lives in the system
-  LaunchDaemon layer. Solution page carries the synthesis: escalate
-  from per-host bypass tickets to a ZPA policy scope review; watch for
-  stacked failure modes (ZPA hijack + SG allow-list mismatch) on
-  employer-owned targets.
+  modes, one runbook, one decision).** Same machine, four unrelated
+  destinations in ~20 days: corp FortiGate IPsec (UDP timeout), partner
+  SFTP (fast TCP RST), employer EC2 CI runner SSH (silent timeout + ICMP),
+  and MS Teams signaling after ISP switch (`EADDRNOTAVAIL` in <100 ms).
+  Fingerprints: **Mode A (FIB hijack)** → `route -n get <ip>` shows
+  CGNAT-range next-hop (100.64.0.0/10); fix with route override.
+  **Mode B (stale NE)** → `route` is clean but socket bind returns
+  `EADDRNOTAVAIL` immediately; fix with `pkill -HUP ZscalerTunnel`.
+  GUI toggles for ZIA/ZPA do not clear Mode B — the stale claim lives
+  in the system LaunchDaemon layer. The synthesis now spans three
+  pages: [[wiki/solutions/vpn-fails-when-another-vpn-agent-installed]]
+  (deep root-cause + policy-side fix), [[wiki/runbooks/macos-vpn-ne-triage]]
+  (10-second triage reflex), [[wiki/decisions/2026-10-01-zpa-escalation-deferral]]
+  (why we run the runbook rather than escalate). First deep→runbook→decision
+  triplet in the vault — pattern worth repeating when a solution gets
+  used in anger more than twice.
 - **[[Kubernetes Deployment Readiness Checklist]]** (2026-10-01,
   promoted from latent). 6-item pre-deploy checklist that closes the
   compound failure mode of poorly-calibrated `requests` + broken
