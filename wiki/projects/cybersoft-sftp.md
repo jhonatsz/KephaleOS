@@ -2,7 +2,7 @@
 type: project
 status: active
 created: 2026-09-15
-updated: 2026-09-15  # backlink added to [[wiki/organizations/cybersoft]] and [[wiki/projects/cybersoftbpo-website]]
+updated: 2026-09-15
 aliases:
   - "CyberSoft SFTP"
   - "sftp.cybersoftbpo.com"

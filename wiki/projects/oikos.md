@@ -2,7 +2,7 @@
 type: project
 status: active
 created: 2026-09-18
-updated: 2026-09-18
+updated: 2026-10-06
 aliases: [Oikos, oikos-homelab, oikos.home.arpa]
 tags: [project, homelab, oikos, networking, proxmox, ccna, self-hosted]
 repo: ~/workspace/personal/homelab/
@@ -39,7 +39,11 @@ Full VLAN/subnet plan: [[../../work/projects/oikos/architecture/address-plan]].
 
 Only the ThinkPad T14 Gen 2 hardware exists. **Phase 0** in progress: docs scaffold + Proxmox install on the T14. Live snapshot: [[../../work/projects/oikos/current-state]].
 
-## Related canonical pages (grown as needed)
+## Related canonical pages
+
+- [[oikos-0001-dns-namespace|ADR oikos-0001 — DNS namespace (`oikos.home.arpa`)]]
+
+## Planned canonical pages (grown as needed)
 
 - `wiki/technologies/proxmox.md`
 - `wiki/technologies/opnsense.md`
