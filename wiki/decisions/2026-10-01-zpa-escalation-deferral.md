@@ -2,7 +2,7 @@
 type: decision
 status: accepted
 created: 2026-10-01
-updated: 2026-10-02
+updated: 2026-10-08
 tags: [zscaler, zpa, vpn, networking, macos, process]
 sources:
   - "[[raw/notes/2026-09-12-forticlient-ipsec-vs-zscaler]]"
@@ -10,6 +10,7 @@ sources:
   - "[[raw/notes/2026-09-22-zpa-hijack-ec2-runner-ssh]]"
   - "[[raw/notes/2026-10-01-0456-zpa-route-command]]"
   - "[[raw/notes/2026-10-01-teams-offline-isp-switch-stale-ne]]"
+  - "[[raw/notes/2026-10-07-zpa-hijack-pgbouncer-aws-nlb]]"
 supersedes: []
 superseded-by: []
 ---
@@ -30,6 +31,7 @@ Between 2026-09-12 and 2026-10-01, the operator's personal Mac was hit by **four
 | 2 | 2026-09-15 | Partner SFTP (TCP 2233) | A — FIB hijack | Fast TCP RST |
 | 3 | 2026-09-22 | Employer AWS EC2 CI runner (SSH 22) | A — FIB hijack | Silent timeout + ICMP |
 | 4 | 2026-10-01 | MS Teams signaling (52.123/16) | **B — stale NE** | `EADDRNOTAVAIL` after ISP switch |
+| 5 | 2026-10-07 | AWS NLB — cybersoft pgbouncer (eproxy-nprd + eproxy-prd, TCP 5432) | A — FIB hijack | Fast TCP RST, shifted to silent timeout mid-session; first A1↔A2 toggle |
 
 [[Zscaler ZPA route hijack]] carries the technical "third-occurrence rule" — once this pattern hits a third unrelated destination, the recommendation is to stop filing per-host bypass tickets and ask IT for a **ZPA policy scope review** (the ZPA Application Segment list is likely over-broad, catching large public-internet ranges with no business justification).
 
@@ -91,6 +93,29 @@ This decision records the deferral explicitly rather than leaving it as a floati
 - [[00-dashboard/knowledge-map]] — gap entry *"ZPA policy scope review with IT — deferral under pressure"* mirrors this decision
 - Local memory file `~/.claude/projects/-Users-jhonatsz/memory/project_corp_vpn_on_personal_mac.md` carries the identical deferral record for Claude Code sessions outside the vault (parallel source of truth; keep in sync when either changes)
 
+## Status check — 2026-10-08 after incident #5
+
+Five incidents in ~26 days = ~1.3/incident/week average. Trigger #1
+(recurrence rate ≥1/week sustained for 2+ weeks) is **approaching but
+not yet sustained** — the cadence has been bursty, not steady. Trigger
+#2 (shared or non-macOS-routable destination) **nearly fired**: incident
+#5 was shared infrastructure (AWS NLB), but the operator could still
+patch locally because the NLBs' zonal IPs are macOS-routable. If a
+future recurrence hits a destination behind a *dynamic* IP pool or a
+tenant-shared edge the operator can't locally pin, this trigger fires.
+
+The staged persistent LaunchDaemon workaround (added to the solution
+page §Fix §4) reduces per-recurrence manual cost from ~30 seconds to
+~0 — if installed and running, future recurrences become invisible as
+long as they fit the "FIB hijack to macOS-routable IP" pattern. This
+materially lowers the friction-ranking side of the decision and extends
+the horizon over which the deferral stays correct.
+
+Decision stands. Next revisit anchor: if a 6th incident lands within
+2 weeks of #5, or any Trigger #2–#5 condition fires.
+
 ## Sources
 
-See frontmatter — five raw notes spanning the four incidents and the morning operator-practice capture.
+See frontmatter — six raw notes spanning five incidents, the morning
+operator-practice capture, and the AWS-NLB session that introduced the
+LaunchDaemon workaround and the two-egress-IP side-learning.
