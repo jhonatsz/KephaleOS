@@ -2,7 +2,7 @@
 type: solution
 status: active
 created: 2026-09-12
-updated: 2026-10-01
+updated: 2026-10-08
 aliases:
   - "Solution: VPN fails when another VPN/ZTNA agent installed"
   - "VPN-over-VPN routing conflict"
@@ -12,13 +12,16 @@ aliases:
   - "Zscaler stale NetworkExtension claim"
   - "EADDRNOTAVAIL on Microsoft 365 after ISP switch"
   - "MS Teams offline despite internet working"
-tags: [vpn, networking, macos, zscaler, forticlient, ztna, ipsec, routing, sftp, ssh, aws, teams, microsoft-365]
+  - "Zscaler blocking AWS NLB"
+  - "Two-egress-IP problem with Zscaler"
+tags: [vpn, networking, macos, zscaler, forticlient, ztna, ipsec, routing, sftp, ssh, aws, teams, microsoft-365, nlb, pgbouncer]
 sources:
   - "[[raw/notes/2026-09-12-forticlient-ipsec-vs-zscaler]]"
   - "[[raw/notes/2026-09-15-zpa-hijack-partner-sftp]]"
   - "[[raw/notes/2026-09-22-zpa-hijack-ec2-runner-ssh]]"
   - "[[raw/notes/2026-10-01-0456-zpa-route-command]]"
   - "[[raw/notes/2026-10-01-teams-offline-isp-switch-stale-ne]]"
+  - "[[raw/notes/2026-10-07-zpa-hijack-pgbouncer-aws-nlb]]"
 confidence: high
 ---
 
@@ -197,6 +200,68 @@ Then immediately initiate the VPN connection. Caveats:
   entirely — in which case only the admin bypass works
 - Pausing the offending agent is often disabled by admin policy
 
+### 4. Persistent local override — LaunchDaemon (middle path)
+
+When the destination list is stable and the per-recurrence manual cost
+compounds, promote the §3 workaround to a LaunchDaemon that re-applies
+on boot, every 15 min, and on every network state change. **Designed and
+staged during incident #5 (2026-10-07)** when the hijack kept recurring
+across multiple AWS NLB destinations and reboots:
+
+```bash
+# /etc/zscaler-whitelist.conf — one hostname or IP per line, # for comments
+# Reads re-resolve every run so AWS NLB IP rotation is handled automatically.
+
+# /usr/local/bin/zscaler-whitelist-routes.sh (sketch — full version in staging)
+LAN_GW=$(netstat -nr -f inet | awk '/^default/ {print $2; exit}')
+while IFS= read -r entry; do
+  ips=$(dig +short "$entry" | grep -E '^[0-9]+\.' || echo "$entry")
+  for ip in $ips; do
+    /sbin/route -n delete "$ip" 2>/dev/null || true
+    /sbin/route -n add -host "$ip" -gateway "$LAN_GW"
+  done
+done < /etc/zscaler-whitelist.conf
+```
+
+LaunchDaemon plist key fragments:
+
+```xml
+<key>RunAtLoad</key><true/>
+<key>StartInterval</key><integer>900</integer>
+<key>KeepAlive</key><dict><key>NetworkState</key><true/></dict>
+```
+
+Full install bundle lives at `~/.local-staging/zscaler-whitelist/` on the
+operator's Mac. Load with
+`sudo launchctl bootstrap system /Library/LaunchDaemons/com.local.zscaler-whitelist-routes.plist`.
+
+**Trade-off vs §3**: solves "runs on reboot/Wi-Fi switch", does not solve
+"Zscaler policy sync wipes it between ticks" (daemon re-fires on next
+15-min interval or NetworkState event). Trade-off vs IT escalation
+([[wiki/decisions/2026-10-01-zpa-escalation-deferral]]): still a workaround,
+not a structural fix, but materially lowers per-recurrence friction.
+
+### Side gotcha — the two-egress-IP distinction (AWS SG whitelist operations)
+
+A specific trap when the hijacked destination is in **AWS** and you're
+simultaneously trying to open an SG for your own IP: the operator ends
+up with **two different public IPs** depending on how traffic exits:
+
+| Path | Measured by | What arrives at destination |
+| --- | --- | --- |
+| Direct (route-overridden destination) | `curl checkip.amazonaws.com` (hits AWS → direct path) | ISP egress — the IP to whitelist in AWS SGs |
+| Zscaler-tunneled (non-overridden destination) | `curl ifconfig.me` (not route-overridden → Zscaler path) | Zscaler-cloud egress — useless for AWS SG whitelisting |
+
+Both IPs are real. Both will show up in a `curl`. The one that matters
+for an AWS SG allow-list is the **direct** egress IP, because the whole
+point of the route override is that AWS traffic bypasses Zscaler. If you
+whitelist the Zscaler-tunneled IP by mistake, the rule silently does nothing.
+
+**Debug step**: when adding an operator IP to an AWS SG, after the route
+override is in place, run `curl -s https://checkip.amazonaws.com` from
+the host. Because `checkip.amazonaws.com` is itself an AWS IP (route-overridden),
+it reports the direct egress — the correct IP to whitelist.
+
 ## Verification
 
 - `route -n get <vpn-gateway-ip>` returns the physical interface, not a
@@ -254,6 +319,7 @@ the same machine, against four unrelated destination classes and spanning
 | 2026-09-15 | Partner SFTP (TCP 2233) | Third party | A (FIB) | Fast TCP RST |
 | 2026-09-22 | Employer AWS EC2 CI runner (SSH 22) | Employer | A (FIB) | Silent TCP + ICMP timeout |
 | 2026-10-01 | MS Teams signaling (52.123/16) | Microsoft public SaaS | **B (stale NE)** | `EADDRNOTAVAIL` after ISP switch; cleared by `pkill -HUP ZscalerTunnel` |
+| 2026-10-07 | AWS NLB — cybersoft pgbouncer (eproxy-nprd + eproxy-prd, TCP 5432) | Employer (shared infra) | A (FIB) | Fast TCP RST, later shifted to silent timeout mid-session as NLB target health flipped. First A1↔A2 toggle within one destination/session. |
 
 **Third-occurrence rule triggered.** Stop filing per-host bypass tickets.
 The right ask is a **ZPA policy scope review** with IT: ZCC's hijack

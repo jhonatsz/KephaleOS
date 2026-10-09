@@ -1,7 +1,7 @@
 ---
 type: dashboard
 created: 2026-09-13
-updated: 2026-10-06
+updated: 2026-10-08
 ---
 
 # Knowledge Map
@@ -82,14 +82,17 @@ canonical pages (avoiding broken-link noise for lint):
 
 - [[Zscaler ZPA route hijack]] — canonical solution page (formally
   [[Solution: VPN fails when another VPN/ZTNA agent installed]]).
-  Backed by **four** lived incidents in ~20 days (FortiClient IPsec,
+  Backed by **five** lived incidents in ~26 days (FortiClient IPsec,
   partner SFTP TCP RST, AWS EC2 CI runner SSH silent timeout, MS Teams
-  signaling after ISP switch). Covers **two distinct enforcement
-  layers**: Mode A (FIB route hijack — fix with `route delete/add`)
-  and Mode B (stale NetworkExtension claim after network context change
-  — fix with `pkill -HUP ZscalerTunnel`). Third-occurrence rule
-  triggered → escalation is now a ZPA policy scope review, not per-host
-  bypass tickets.
+  signaling after ISP switch, AWS NLB in front of cybersoft pgbouncer).
+  Covers **two distinct enforcement layers**: Mode A (FIB route hijack
+  — fix with `route delete/add`) and Mode B (stale NetworkExtension
+  claim after network context change — fix with
+  `pkill -HUP ZscalerTunnel`). Incident #5 added a **persistent-override
+  LaunchDaemon** (§Fix §4) as a middle-path workaround and surfaced the
+  **two-egress-IP side-gotcha** (direct ISP vs Zscaler-tunneled) that
+  breaks naive AWS SG whitelisting. Third-occurrence rule triggered →
+  escalation is now a ZPA policy scope review, not per-host bypass tickets.
 - [[wiki/runbooks/macos-vpn-ne-triage|Runbook: macOS VPN/NE triage]] —
   10-second decision-tree extraction of the above solution page for
   mid-incident use. Pairs the two diagnostic measurements (`nc -zv`
@@ -125,23 +128,27 @@ Both concept pages are **referenced from** the solution/runbook/decision triplet
 
 ## Important syntheses
 
-- **Zscaler ZPA hijack pattern (4 incidents → one canonical solution, two
-  modes, one runbook, one decision).** Same machine, four unrelated
-  destinations in ~20 days: corp FortiGate IPsec (UDP timeout), partner
-  SFTP (fast TCP RST), employer EC2 CI runner SSH (silent timeout + ICMP),
-  and MS Teams signaling after ISP switch (`EADDRNOTAVAIL` in <100 ms).
+- **Zscaler ZPA hijack pattern (5 incidents → one canonical solution, two
+  modes, one runbook, one decision, one persistent-workaround daemon).**
+  Same machine, five unrelated destinations in ~26 days: corp FortiGate
+  IPsec (UDP timeout), partner SFTP (fast TCP RST), employer EC2 CI
+  runner SSH (silent timeout + ICMP), MS Teams signaling after ISP
+  switch (`EADDRNOTAVAIL` in <100 ms), AWS NLB fronting cybersoft
+  pgbouncer (fast RST → silent timeout toggle within one destination).
   Fingerprints: **Mode A (FIB hijack)** → `route -n get <ip>` shows
   CGNAT-range next-hop (100.64.0.0/10); fix with route override.
   **Mode B (stale NE)** → `route` is clean but socket bind returns
   `EADDRNOTAVAIL` immediately; fix with `pkill -HUP ZscalerTunnel`.
   GUI toggles for ZIA/ZPA do not clear Mode B — the stale claim lives
   in the system LaunchDaemon layer. The synthesis now spans three
-  pages: [[wiki/solutions/vpn-fails-when-another-vpn-agent-installed]]
-  (deep root-cause + policy-side fix), [[wiki/runbooks/macos-vpn-ne-triage]]
-  (10-second triage reflex), [[wiki/decisions/2026-10-01-zpa-escalation-deferral]]
-  (why we run the runbook rather than escalate). First deep→runbook→decision
-  triplet in the vault — pattern worth repeating when a solution gets
-  used in anger more than twice.
+  pages plus a staged persistent workaround:
+  [[wiki/solutions/vpn-fails-when-another-vpn-agent-installed]]
+  (deep root-cause + policy-side fix + §4 LaunchDaemon workaround + two-egress-IP side-gotcha),
+  [[wiki/runbooks/macos-vpn-ne-triage]] (10-second triage reflex),
+  [[wiki/decisions/2026-10-01-zpa-escalation-deferral]] (why we run the
+  runbook rather than escalate; 2026-10-08 status check added after #5).
+  First deep→runbook→decision triplet in the vault — pattern worth
+  repeating when a solution gets used in anger more than twice.
 - **[[Kubernetes Deployment Readiness Checklist]]** (2026-10-01,
   promoted from latent). 6-item pre-deploy checklist that closes the
   compound failure mode of poorly-calibrated `requests` + broken
